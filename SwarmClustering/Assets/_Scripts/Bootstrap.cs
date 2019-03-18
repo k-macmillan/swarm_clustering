@@ -1,4 +1,5 @@
-﻿using Unity.Entities;
+﻿using System.Collections.Generic;
+using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -6,7 +7,10 @@ using UnityEngine;
 public class Bootstrap
 {
     public static EntityManager em;
-    static Entity ball;
+    public static Dictionary<int, Entity> grid = new Dictionary<int, Entity>();
+    public static int width = 200;
+    public static int height= 200;
+    public static int max_value = 200 * 200 - 1;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     public static void CreateArchetypes()
@@ -14,8 +18,7 @@ public class Bootstrap
         em = World.Active.GetOrCreateManager<EntityManager>();
 
         AntBootstrap.Initialize(ref em);
-        BlueBallBootstrap.Initialize(ref em);
-        RedBallBootstrap.Initialize(ref em);
+        BallBootstrap.Initialize(ref em);
     }
 
 
@@ -23,8 +26,7 @@ public class Bootstrap
     public static void LoadMeshes()
     {
         AntBootstrap.InitializeWithScene();
-        BlueBallBootstrap.InitializeWithScene();
-        RedBallBootstrap.InitializeWithScene();
+        BallBootstrap.InitializeWithScene();
 
         NewGame();
     }
@@ -40,29 +42,44 @@ public class Bootstrap
 
     private static void InitializeGame()
     {
-        // Place Blue Balls
-        for (int i = 0; i < 100; ++i)
-        {
-            int x = UnityEngine.Random.Range(0, 199);
-            int z = UnityEngine.Random.Range(0, 199);
-            BlueBall.GenerateBall(ref ball, ref em, new float3(x, 1, z));
-        }
 
-        // Place Red Balls
+        // Place Balls
         for (int i = 0; i < 100; ++i)
         {
-            int x = UnityEngine.Random.Range(0, 199);
-            int z = UnityEngine.Random.Range(0, 199);
-            RedBall.GenerateBall(ref ball, ref em, new float3(x, 1, z));
+            GenerateBall(Common.Blue);
+            GenerateBall(Common.Red);
         }
 
         // Place Ants
         for (int i = 0; i < 500; ++i)
         {
-            int x = UnityEngine.Random.Range(0, 199);
-            int z = UnityEngine.Random.Range(0, 199);
-            Ant.GenerateAnt(ref ball, ref em, new float3(x, 1, z));
+            GenerateAnt();
         }
+        
+    }
+
+    private static void GenerateBall(int color)
+    {
+        int position = UnityEngine.Random.Range(0, max_value);
+        while (grid.ContainsKey(position))
+        {
+            position = UnityEngine.Random.Range(0, max_value);
+        }
+        Entity ball = em.CreateEntity(Ball.ballArchetype);
+        Ball.CreateBall(ref ball, ref em, new float3(position / width, 1, position % width), color);
+        grid.Add(position, ball);
+    }
+
+    private static void GenerateAnt()
+    {
+        int position = UnityEngine.Random.Range(0, max_value);
+        while (grid.ContainsKey(position))
+        {
+            position = UnityEngine.Random.Range(0, max_value);
+        }
+        Entity ant = em.CreateEntity(Ant.antArchetype);
+        Ant.CreateAnt(ref ant, ref em, new float3(position / width, 1, position % width));
+        grid.Add(position, ant);
     }
 
 }

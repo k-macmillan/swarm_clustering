@@ -12,10 +12,11 @@ public sealed class AntBootstrap
     {
         em = entityManager;
 
-        // Create ship archetype
+        // Create ant archetype
         Ant.antArchetype = em.CreateArchetype(
             ComponentType.Create<Position>(),
-            ComponentType.Create<Rotation>()
+            ComponentType.Create<Rotation>(),
+            ComponentType.Create<Carrying>()
             );
     }
 

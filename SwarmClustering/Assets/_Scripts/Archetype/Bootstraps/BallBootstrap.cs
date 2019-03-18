@@ -3,7 +3,7 @@ using Unity.Transforms;
 using UnityEngine.SceneManagement;
 
 
-public sealed class BlueBallBootstrap
+public sealed class BallBootstrap
 {
     public static EntityManager em;
 
@@ -12,16 +12,19 @@ public sealed class BlueBallBootstrap
     {
         em = entityManager;
 
-        // Create ship archetype
-        BlueBall.ballArchetype = em.CreateArchetype(
+        // Create ball archetype
+        Ball.ballArchetype = em.CreateArchetype(
             ComponentType.Create<Position>(),
-            ComponentType.Create<Rotation>()
+            ComponentType.Create<Rotation>(),
+            ComponentType.Create<Faction>(),
+            ComponentType.Create<Carried>()
             );
     }
 
     public static void InitializeWithScene()
     {
-        BlueBall.ballMesh = Common.GetLookFromPrototype("BlueBallPrototype");
+        Ball.ballBlueMesh = Common.GetLookFromPrototype("BlueBallPrototype");
+        Ball.ballRedMesh = Common.GetLookFromPrototype("RedBallPrototype");
     }
 
 
