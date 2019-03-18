@@ -40,7 +40,7 @@ public class SwarmMechanics : ComponentSystem
                 if (a_Data.Carrying[i].Value == Common.False && Bootstrap.balls.ContainsKey(originalPosition))
                 {
                     PickupItem(i, originalPosition);
-                    a_Data.Carrying[i] = new Carrying { Value = Common.True };
+                    
                 }
                 else if (a_Data.Carrying[i].Value == Common.True)
                 {
@@ -90,11 +90,21 @@ public class SwarmMechanics : ComponentSystem
         int originalPosition = Common.GetGridIndex(a_Data.StartPosition[index].Value);
 
         a_Data.StartPosition[index] = new StartPosition { Value = a_Data.NextPosition[index].Value };
-        
-        while ((OnEdge(newPosition) || Bootstrap.ants.ContainsKey(newPosition)) && loop_count < loop_limit)
+        if (a_Data.Carrying[index].Value == Common.True)
         {
-            newPosition = GetPosition(Random.Range(0, 8));
-            ++loop_count;
+            while ((OnEdge(newPosition) || Bootstrap.ants.ContainsKey(newPosition) || Bootstrap.balls.ContainsKey(newPosition)) && loop_count < loop_limit)
+            {
+                newPosition = GetPosition(Random.Range(0, 8));
+                ++loop_count;
+            }
+        }
+        else
+        {
+            while ((OnEdge(newPosition) || Bootstrap.ants.ContainsKey(newPosition)) && loop_count < loop_limit)
+            {
+                newPosition = GetPosition(Random.Range(0, 8));
+                ++loop_count;
+            }
         }
         if (loop_count != loop_limit)
         {
@@ -203,6 +213,7 @@ public class SwarmMechanics : ComponentSystem
         // Not sure where this cutoff will be yet
         if (ProbabilityPickup() > 0.0f)
         {
+            a_Data.Carrying[index] = new Carrying { Value = Common.True };
             UpdateBallPosition(index, originalPosition);
         }
     }
