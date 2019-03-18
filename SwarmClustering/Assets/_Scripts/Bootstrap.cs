@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Unity.Entities;
-using Unity.Mathematics;
 using UnityEngine;
 
 
@@ -37,10 +36,8 @@ public class Bootstrap
 
     public static void NewGame()
     {
-        // TODO: Add a camera controller
         InitializeGame();
-
-
+        Run();
     }
 
     private static void InitializeGame()
@@ -63,10 +60,10 @@ public class Bootstrap
 
     private static void GenerateBall(int color)
     {
-        int position = UnityEngine.Random.Range(0, max_value);
+        int position = Random.Range(0, max_value);
         while (grid.ContainsKey(position))
         {
-            position = UnityEngine.Random.Range(0, max_value);
+            position = Random.Range(0, max_value);
         }
         Entity ball = em.CreateEntity(Ball.ballArchetype);
         Ball.CreateBall(ref ball, ref em, position, color);
@@ -75,14 +72,19 @@ public class Bootstrap
 
     private static void GenerateAnt()
     {
-        int position = UnityEngine.Random.Range(0, max_value);
+        int position = Random.Range(0, max_value);
         while (grid.ContainsKey(position))
         {
-            position = UnityEngine.Random.Range(0, max_value);
+            position = Random.Range(0, max_value);
         }
         Entity ant = em.CreateEntity(Ant.antArchetype);
         Ant.CreateAnt(ref ant, ref em, position);
         grid.Add(position, ant);
+    }
+
+    private static void Run()
+    {
+
     }
 
 }
