@@ -46,19 +46,19 @@ public class PlayerController : ComponentSystem
         // Movement Handling
         if (Input.GetKey(KeyCode.W))
         {
-            Bootstrap.camera.transform.position = Bootstrap.camera.transform.position + Bootstrap.camera.transform.rotation * Vector3.forward;
+            Bootstrap.camera.transform.position = Bootstrap.camera.transform.position + Bootstrap.camera.transform.rotation * new Vector3(0, 0, 0.5f);
         }
         if (Input.GetKey(KeyCode.S))
         {
-            Bootstrap.camera.transform.position = Bootstrap.camera.transform.position + Bootstrap.camera.transform.rotation * Vector3.back;
+            Bootstrap.camera.transform.position = Bootstrap.camera.transform.position + Bootstrap.camera.transform.rotation * new Vector3(0, 0, -0.5f);
         }
         if (Input.GetKey(KeyCode.A))
         {
-            Bootstrap.camera.transform.position = Bootstrap.camera.transform.position + Bootstrap.camera.transform.rotation * Vector3.left;
+            Bootstrap.camera.transform.position = Bootstrap.camera.transform.position + Bootstrap.camera.transform.rotation * new Vector3(0.5f, 0, 0);
         }
         if (Input.GetKey(KeyCode.D))
         {
-            Bootstrap.camera.transform.position = Bootstrap.camera.transform.position + Bootstrap.camera.transform.rotation * Vector3.right;
+            Bootstrap.camera.transform.position = Bootstrap.camera.transform.position + Bootstrap.camera.transform.rotation * new Vector3(0.5f, 0, 0);
         }
     }
 
