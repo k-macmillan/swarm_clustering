@@ -16,7 +16,9 @@ public sealed class AntBootstrap
         Ant.antArchetype = em.CreateArchetype(
             ComponentType.Create<Position>(),
             ComponentType.Create<Rotation>(),
-            ComponentType.Create<Carrying>()
+            ComponentType.Create<Carrying>(),
+            ComponentType.Create<StartPosition>(),
+            ComponentType.Create<NextPosition>()
             );
     }
 
