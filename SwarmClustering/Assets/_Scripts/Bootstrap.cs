@@ -6,11 +6,12 @@ using UnityEngine;
 public class Bootstrap
 {
     public static EntityManager em;
-    public static Dictionary<int, Entity> grid = new Dictionary<int, Entity>();
+    public static Dictionary<int, int> grid = new Dictionary<int, int>();
     public static int width = 200;
     public static int height= 200;
     public static int max_value = 200 * 200 - 1;
     public static GameObject camera;
+    public const float Delay = 0.25f;
 
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -67,7 +68,7 @@ public class Bootstrap
         }
         Entity ball = em.CreateEntity(Ball.ballArchetype);
         Ball.CreateBall(ref ball, ref em, position, color);
-        grid.Add(position, ball);
+        grid.Add(position, color);
     }
 
     private static void GenerateAnt()
@@ -79,7 +80,7 @@ public class Bootstrap
         }
         Entity ant = em.CreateEntity(Ant.antArchetype);
         Ant.CreateAnt(ref ant, ref em, position);
-        grid.Add(position, ant);
+        grid.Add(position, 0);
     }
 
     private static void Run()
