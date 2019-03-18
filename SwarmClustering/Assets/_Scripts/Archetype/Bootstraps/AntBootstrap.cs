@@ -5,17 +5,11 @@ using UnityEngine.SceneManagement;
 
 public sealed class AntBootstrap
 {
-    public static EntityManager em;
-
-    //[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    public static void Initialize(ref EntityManager entityManager)
+    public static void Initialize()
     {
-        em = entityManager;
-
         // Create ant archetype
-        Ant.antArchetype = em.CreateArchetype(
+        Ant.antArchetype = Bootstrap.em.CreateArchetype(
             ComponentType.Create<Position>(),
-            ComponentType.Create<Rotation>(),
             ComponentType.Create<Carrying>(),
             ComponentType.Create<StartPosition>(),
             ComponentType.Create<NextPosition>()

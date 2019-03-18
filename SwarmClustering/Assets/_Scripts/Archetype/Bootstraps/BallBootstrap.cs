@@ -5,19 +5,12 @@ using UnityEngine.SceneManagement;
 
 public sealed class BallBootstrap
 {
-    public static EntityManager em;
-
-    //[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    public static void Initialize(ref EntityManager entityManager)
+    public static void Initialize()
     {
-        em = entityManager;
-
         // Create ball archetype
-        Ball.ballArchetype = em.CreateArchetype(
+        Ball.ballArchetype = Bootstrap.em.CreateArchetype(
             ComponentType.Create<Position>(),
-            ComponentType.Create<Rotation>(),
-            ComponentType.Create<Faction>(),
-            ComponentType.Create<Carried>()
+            ComponentType.Create<Faction>()
             );
     }
 

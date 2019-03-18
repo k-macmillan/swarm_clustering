@@ -6,7 +6,8 @@ using UnityEngine;
 public class Bootstrap
 {
     public static EntityManager em;
-    public static Dictionary<int, int> grid = new Dictionary<int, int>();
+    public static Dictionary<int, int> ants = new Dictionary<int, int>();
+    public static Dictionary<int, Entity> balls = new Dictionary<int, Entity>();
     public static int width = 200;
     public static int height= 200;
     public static int max_value = 200 * 200 - 1;
@@ -19,8 +20,8 @@ public class Bootstrap
     {
         em = World.Active.GetOrCreateManager<EntityManager>();
 
-        AntBootstrap.Initialize(ref em);
-        BallBootstrap.Initialize(ref em);
+        AntBootstrap.Initialize();
+        BallBootstrap.Initialize();
     }
 
 
@@ -56,31 +57,30 @@ public class Bootstrap
         {
             GenerateAnt();
         }
-        
     }
 
     private static void GenerateBall(int color)
     {
         int position = Random.Range(0, max_value);
-        while (grid.ContainsKey(position))
+        while (balls.ContainsKey(position) || ants.ContainsKey(position))
         {
             position = Random.Range(0, max_value);
         }
         Entity ball = em.CreateEntity(Ball.ballArchetype);
         Ball.CreateBall(ref ball, ref em, position, color);
-        grid.Add(position, color);
+        balls.Add(position, ball);
     }
 
     private static void GenerateAnt()
     {
         int position = Random.Range(0, max_value);
-        while (grid.ContainsKey(position))
+        while (balls.ContainsKey(position) || ants.ContainsKey(position))
         {
             position = Random.Range(0, max_value);
         }
         Entity ant = em.CreateEntity(Ant.antArchetype);
         Ant.CreateAnt(ref ant, ref em, position);
-        grid.Add(position, 0);
+        ants.Add(position, 0);
     }
 
     private static void Run()

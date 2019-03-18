@@ -1,7 +1,6 @@
 ﻿using Unity.Entities;
 using Unity.Transforms;
 using UnityEngine;
-using Unity.Mathematics;
 
 public class SwarmMechanics : ComponentSystem
 {
@@ -10,8 +9,9 @@ public class SwarmMechanics : ComponentSystem
     private static int red;
     private static int blue;
     private static int modifier = -1;
+    private const int loop_limit = 100;
 
-    public struct Data
+    public struct AntData
     {
         public readonly int Length;
         public ComponentDataArray<Position> Position;
@@ -20,7 +20,8 @@ public class SwarmMechanics : ComponentSystem
         public ComponentDataArray<NextPosition> NextPosition;
     }
 
-    [Inject] private Data m_Data;
+    [Inject] private AntData a_Data;
+
 
     // Update is called once per frame
     protected override void OnUpdate()
@@ -30,20 +31,19 @@ public class SwarmMechanics : ComponentSystem
         if (timer > Bootstrap.Delay)
         {
             // Update new direction/actions
-            for (int i = 0; i < m_Data.Length; ++i)
+            for (int i = 0; i < a_Data.Length; ++i)
             {
-                position = Common.GetGridIndex(m_Data.NextPosition[i].Value);
+                position = Common.GetGridIndex(a_Data.NextPosition[i].Value);
                 CountLocality();
-                
-                // Update positional data
-                m_Data.StartPosition[i] = new StartPosition { Value = m_Data.NextPosition[i].Value };
-                int newPosition = GetPosition(UnityEngine.Random.Range(0, 8));
-                while (OnEdge(newPosition))
+                UpdatePosition(i);
+                if (a_Data.Carrying[i].Value == Common.False && Bootstrap.balls.ContainsKey(position))
                 {
-                    newPosition = GetPosition(UnityEngine.Random.Range(0, 8));
+                    PickupItem(i);
                 }
-                m_Data.NextPosition[i] = new NextPosition { Value = Common.GetGridLocation(newPosition) };
-                m_Data.Position[i] = new Position { Value = m_Data.StartPosition[i].Value };
+                else if (a_Data.Carrying[i].Value == Common.True && !Bootstrap.ants.ContainsKey(position))
+                {
+                    DropoffItem(i);
+                }
             }
             timer = 0f;
         }
@@ -51,9 +51,9 @@ public class SwarmMechanics : ComponentSystem
         {
             // LERP postional movement
             float timeLeft = 1 - (Bootstrap.Delay - timer) / Bootstrap.Delay;            
-            for (int i = 0; i < m_Data.Length; ++i)
+            for (int i = 0; i < a_Data.Length; ++i)
             {
-                m_Data.Position[i] = new Position { Value = Vector3.Lerp(m_Data.StartPosition[i].Value, m_Data.NextPosition[i].Value, timeLeft) };
+                a_Data.Position[i] = new Position { Value = Vector3.Lerp(a_Data.StartPosition[i].Value, a_Data.NextPosition[i].Value, timeLeft) };
             }
         }
     }
@@ -66,8 +66,33 @@ public class SwarmMechanics : ComponentSystem
         // I am allowing this space to act as a Torus, ignoring the edges.
         for (int i = 0; i < 8; ++i)
         {
-            CheckPosition(GetPosition(i));
+            CheckLocality(GetPosition(i));
         }
+    }
+
+    private void UpdatePosition(int index)
+    {
+        // Update positional data
+        int loop_count = 0;
+        int newPosition = GetPosition(UnityEngine.Random.Range(0, 8));
+        int originalPosition = Common.GetGridIndex(a_Data.StartPosition[index].Value);
+
+        a_Data.StartPosition[index] = new StartPosition { Value = a_Data.NextPosition[index].Value };
+        
+        while ((OnEdge(newPosition) || Bootstrap.ants.ContainsKey(newPosition)) && loop_count < loop_limit)
+        {
+            newPosition = GetPosition(UnityEngine.Random.Range(0, 8));
+            ++loop_count;
+        }
+        if (loop_count != loop_limit)
+        {
+            a_Data.NextPosition[index] = new NextPosition { Value = Common.GetGridLocation(newPosition) };
+            a_Data.Position[index] = new Position { Value = a_Data.StartPosition[index].Value };
+            // After updating position clear the old one and store the new one
+            Bootstrap.ants.Remove(originalPosition);
+            Bootstrap.ants.Add(newPosition, 0);
+        }
+        // Else we were stuck in an infinite loop, stay still
     }
 
     private int GetPosition(int pos)
@@ -153,11 +178,44 @@ public class SwarmMechanics : ComponentSystem
         modifier = -1;
     }
 
-    private void CheckPosition(int checkPosition)
+    private void CheckLocality(int checkPosition)
     {
-        if (Bootstrap.grid.TryGetValue(checkPosition, out modifier))
+        if (Bootstrap.ants.TryGetValue(checkPosition, out modifier))
         {
             UpdateRedBlue();
         }
+    }
+
+    private void PickupItem(int index)
+    {
+        // Not sure where this cutoff will be yet
+        if (ProbabilityPickup() > 1.0f)
+        {
+            // Remove ball from balls
+            Bootstrap.balls.Remove(position);
+
+            //Update ball to ant position
+            Bootstrap.balls.TryGetValue(position, out Entity ball);
+            Bootstrap.em.SetComponentData(ball, new Position { Value = a_Data.NextPosition[index].Value });
+            Bootstrap.balls.Add(Common.GetGridIndex(a_Data.NextPosition[index].Value), ball);
+        }
+    }
+
+    private float ProbabilityPickup()
+    {
+        return 0f;
+    }
+
+    private void DropoffItem(int index)
+    {
+        if (ProbabilityDropoff() > 1.0f)
+        {
+
+        }
+    }
+
+    private float ProbabilityDropoff()
+    {
+        return 0f;
     }
 }
