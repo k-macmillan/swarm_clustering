@@ -9,10 +9,10 @@ public static class Ant
 
     public static MeshInstanceRenderer antMesh;
 
-    public static void CreateAnt(ref Entity ant, ref EntityManager em, float3 position)
+    public static void CreateAnt(ref Entity ant, ref EntityManager em, int position)
     {
         ant = em.CreateEntity(antArchetype);
-        em.SetComponentData(ant, new Position { Value = position });
+        em.SetComponentData(ant, new Position { Value = Common.GetGridLocation(position) });
         em.SetComponentData(ant, new Rotation { Value = new quaternion(0f, 0f, 0f, 1f) });
         em.SetComponentData(ant, new Carrying { Value = Common.False });
 

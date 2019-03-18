@@ -66,7 +66,7 @@ public class Bootstrap
             position = UnityEngine.Random.Range(0, max_value);
         }
         Entity ball = em.CreateEntity(Ball.ballArchetype);
-        Ball.CreateBall(ref ball, ref em, new float3(position / width, 1, position % width), color);
+        Ball.CreateBall(ref ball, ref em, position, color);
         grid.Add(position, ball);
     }
 
@@ -78,7 +78,7 @@ public class Bootstrap
             position = UnityEngine.Random.Range(0, max_value);
         }
         Entity ant = em.CreateEntity(Ant.antArchetype);
-        Ant.CreateAnt(ref ant, ref em, new float3(position / width, 1, position % width));
+        Ant.CreateAnt(ref ant, ref em, position);
         grid.Add(position, ant);
     }
 
