@@ -5,6 +5,9 @@ public class PlayerController : ComponentSystem
 {
     public static float pitch = 0;
     public static float yaw = 0;
+    public static double timer = 0d;
+    public const double delay = 0.5d;
+    public const float speed = 0.5f;
 
 
     // Start is called before the first frame update
@@ -31,7 +34,6 @@ public class PlayerController : ComponentSystem
         yaw += Input.GetAxis("Mouse X");
         pitch -= Input.GetAxis("Mouse Y");
         Bootstrap.camera.transform.eulerAngles = new Vector3(pitch, yaw, 0f);
-
     }
 
     private void HandleKeyboard()
@@ -46,38 +48,57 @@ public class PlayerController : ComponentSystem
         // Movement Handling
         if (Input.GetKey(KeyCode.W))
         {
-            Bootstrap.camera.transform.position = Bootstrap.camera.transform.position + Bootstrap.camera.transform.rotation * new Vector3(0, 0, 0.5f);
+            CameraClamp(new Vector3(0, 0, speed));
         }
         if (Input.GetKey(KeyCode.S))
         {
-            Bootstrap.camera.transform.position = Bootstrap.camera.transform.position + Bootstrap.camera.transform.rotation * new Vector3(0, 0, -0.5f);
+            CameraClamp(new Vector3(0, 0, -speed));
         }
         if (Input.GetKey(KeyCode.A))
         {
-            Bootstrap.camera.transform.position = Bootstrap.camera.transform.position + Bootstrap.camera.transform.rotation * new Vector3(0.5f, 0, 0);
+            CameraClamp(new Vector3(-speed, 0, 0));
         }
         if (Input.GetKey(KeyCode.D))
         {
-            Bootstrap.camera.transform.position = Bootstrap.camera.transform.position + Bootstrap.camera.transform.rotation * new Vector3(0.5f, 0, 0);
+            CameraClamp(new Vector3(speed, 0, 0));
         }
+    }
+
+    private void CameraClamp(Vector3 newPos)
+    {
+        Vector3 pos = Bootstrap.camera.transform.position + Bootstrap.camera.transform.rotation * newPos;
+        if (pos.y < 1f)
+        {
+            pos.y = 1f;
+        }
+        Bootstrap.camera.transform.position = pos;
     }
 
     private void HandleSpeedChange()
     {
-        if (Input.GetKeyDown(KeyCode.UpArrow))
+        timer += Time.deltaTime;
+        if (Input.GetKey(KeyCode.UpArrow))
         {
-            Bootstrap.Delay -= 0.015625f;
-            if (Bootstrap.Delay < 0f)
+            if (timer > delay)
             {
-                Bootstrap.Delay = 0f;
+                Bootstrap.Delay -= 0.015625f;
+                if (Bootstrap.Delay < 0f)
+                {
+                    Bootstrap.Delay = 0f;
+                }
+                timer = 0;
             }
         }
-        if (Input.GetKeyDown(KeyCode.DownArrow))
+        if (Input.GetKey(KeyCode.DownArrow))
         {
-            Bootstrap.Delay += 0.015625f;
-            if (Bootstrap.Delay > 1f)
+            if (timer > delay)
             {
-                Bootstrap.Delay = 1f;
+                Bootstrap.Delay += 0.015625f;
+                if (Bootstrap.Delay > 0.3125f)
+                {
+                    Bootstrap.Delay = 0.3125f;
+                }
+                timer = 0;
             }
         }
     }
