@@ -24,10 +24,6 @@ public class PlayerController : ComponentSystem
             UpdateLook();
             UpdatePosition();
         }
-        else
-        {
-            Debug.Log("Camera not set!");
-        }
     }
 
     private void UpdateLook()
