@@ -33,19 +33,31 @@ public class SwarmMechanics : ComponentSystem
             // Update new direction/actions
             for (int i = 0; i < a_Data.Length; ++i)
             {
+                int originalPosition = Common.GetGridIndex(a_Data.StartPosition[i].Value);
                 position = Common.GetGridIndex(a_Data.NextPosition[i].Value);
                 CountLocality();
                 UpdatePosition(i);
-                if (a_Data.Carrying[i].Value == Common.False && Bootstrap.balls.ContainsKey(position))
+                if (a_Data.Carrying[i].Value == Common.False && Bootstrap.balls.ContainsKey(originalPosition))
                 {
-                    PickupItem(i);
+                    PickupItem(i, originalPosition);
+                    a_Data.Carrying[i] = new Carrying { Value = Common.True };
                 }
-                else if (a_Data.Carrying[i].Value == Common.True && !Bootstrap.ants.ContainsKey(position))
+                else if (a_Data.Carrying[i].Value == Common.True)
                 {
-                    DropoffItem(i);
+                    if (!Bootstrap.ants.ContainsKey(position))
+                    {
+                        DropoffItem(i);
+                    }
+                    else
+                    {
+                        // Update position of ball
+                        UpdateBallPosition(i, originalPosition);
+                    }
                 }
+                
             }
             timer = 0f;
+            Debug.Log("Balls size: " + Bootstrap.balls.Count);
         }
         else
         {
@@ -74,14 +86,14 @@ public class SwarmMechanics : ComponentSystem
     {
         // Update positional data
         int loop_count = 0;
-        int newPosition = GetPosition(UnityEngine.Random.Range(0, 8));
+        int newPosition = GetPosition(Random.Range(0, 8));
         int originalPosition = Common.GetGridIndex(a_Data.StartPosition[index].Value);
 
         a_Data.StartPosition[index] = new StartPosition { Value = a_Data.NextPosition[index].Value };
         
         while ((OnEdge(newPosition) || Bootstrap.ants.ContainsKey(newPosition)) && loop_count < loop_limit)
         {
-            newPosition = GetPosition(UnityEngine.Random.Range(0, 8));
+            newPosition = GetPosition(Random.Range(0, 8));
             ++loop_count;
         }
         if (loop_count != loop_limit)
@@ -186,16 +198,22 @@ public class SwarmMechanics : ComponentSystem
         }
     }
 
-    private void PickupItem(int index)
+    private void PickupItem(int index, int originalPosition)
     {
         // Not sure where this cutoff will be yet
-        if (ProbabilityPickup() > 1.0f)
+        if (ProbabilityPickup() > 0.0f)
+        {
+            UpdateBallPosition(index, originalPosition);
+        }
+    }
+
+    private void UpdateBallPosition(int index, int originalPosition)
+    {
+        if (Bootstrap.balls.TryGetValue(originalPosition, out Entity ball))
         {
             // Remove ball from balls
-            Bootstrap.balls.Remove(position);
-
+            Bootstrap.balls.Remove(originalPosition);
             //Update ball to ant position
-            Bootstrap.balls.TryGetValue(position, out Entity ball);
             Bootstrap.em.SetComponentData(ball, new Position { Value = a_Data.NextPosition[index].Value });
             Bootstrap.balls.Add(Common.GetGridIndex(a_Data.NextPosition[index].Value), ball);
         }
@@ -203,7 +221,7 @@ public class SwarmMechanics : ComponentSystem
 
     private float ProbabilityPickup()
     {
-        return 0f;
+        return Random.value;
     }
 
     private void DropoffItem(int index)
