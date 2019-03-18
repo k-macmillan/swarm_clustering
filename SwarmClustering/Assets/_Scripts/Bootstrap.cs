@@ -11,7 +11,7 @@ public class Bootstrap
     public static int height= 200;
     public static int max_value = 200 * 200 - 1;
     public static GameObject camera;
-    public const float Delay = 0.5f;
+    public static float Delay = 0.25f;
 
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]

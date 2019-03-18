@@ -22,7 +22,7 @@ public class PlayerController : ComponentSystem
         if (Bootstrap.camera != null)
         {
             UpdateLook();
-            UpdatePosition();
+            HandleKeyboard();
         }
     }
 
@@ -34,10 +34,16 @@ public class PlayerController : ComponentSystem
 
     }
 
+    private void HandleKeyboard()
+    {
+        UpdatePosition();
+        HandleSpeedChange();
+        HandleExit();
+    }
+
     private void UpdatePosition()
     {
-
-
+        // Movement Handling
         if (Input.GetKey(KeyCode.W))
         {
             Bootstrap.camera.transform.position = Bootstrap.camera.transform.position + Bootstrap.camera.transform.rotation * Vector3.forward;
@@ -54,6 +60,31 @@ public class PlayerController : ComponentSystem
         {
             Bootstrap.camera.transform.position = Bootstrap.camera.transform.position + Bootstrap.camera.transform.rotation * Vector3.right;
         }
+    }
+
+    private void HandleSpeedChange()
+    {
+        if (Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            Bootstrap.Delay -= 0.015625f;
+            if (Bootstrap.Delay < 0f)
+            {
+                Bootstrap.Delay = 0f;
+            }
+        }
+        if (Input.GetKeyDown(KeyCode.DownArrow))
+        {
+            Bootstrap.Delay += 0.015625f;
+            if (Bootstrap.Delay > 1f)
+            {
+                Bootstrap.Delay = 1f;
+            }
+        }
+    }
+
+    private void HandleExit()
+    {
+        // Exit handling
         if (Input.GetKey(KeyCode.Escape))
         {
 #if UNITY_STANDALONE

@@ -38,7 +38,12 @@ public class SwarmMechanics : ComponentSystem
                 // Update positional data
                 m_Data.StartPosition[i] = new StartPosition { Value = m_Data.NextPosition[i].Value };
                 int newPosition = GetPosition(UnityEngine.Random.Range(0, 8));
+                while (OnEdge(newPosition))
+                {
+                    newPosition = GetPosition(UnityEngine.Random.Range(0, 8));
+                }
                 m_Data.NextPosition[i] = new NextPosition { Value = Common.GetGridLocation(newPosition) };
+                m_Data.Position[i] = new Position { Value = m_Data.StartPosition[i].Value };
             }
             timer = 0f;
         }
@@ -105,6 +110,30 @@ public class SwarmMechanics : ComponentSystem
 
         }
         return ret_val;
+    }
+
+    private bool OnEdge(int newPosition)
+    {
+        if (newPosition < Bootstrap.width)
+        {
+            return true;
+        }
+        else if (newPosition % Bootstrap.width == 0)
+        {
+            return true;
+        }
+        else if (newPosition % Bootstrap.width == Bootstrap.width - 1)
+        {
+            return true;
+        }
+        else if (newPosition >= Bootstrap.max_value - Bootstrap.width)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     private void UpdateRedBlue()
