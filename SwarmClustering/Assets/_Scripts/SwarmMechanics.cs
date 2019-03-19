@@ -28,36 +28,14 @@ public class SwarmMechanics : ComponentSystem
     {
         // Every Bootstrap.Delay seconds update the ants
         timer += Time.deltaTime;
-        if (timer > Bootstrap.Delay)
+        if (timer >= Bootstrap.Delay)
         {
+            timer = 0f;
             // Update new direction/actions
             for (int i = 0; i < a_Data.Length; ++i)
             {
-                int originalPosition = Common.GetGridIndex(a_Data.StartPosition[i].Value);
-                position = Common.GetGridIndex(a_Data.NextPosition[i].Value);
-                CountLocality();
-                UpdatePosition(i);
-                if (a_Data.Carrying[i].Value == Common.False && Bootstrap.balls.ContainsKey(originalPosition))
-                {
-                    PickupItem(i, originalPosition);
-                    
-                }
-                else if (a_Data.Carrying[i].Value == Common.True)
-                {
-                    if (!Bootstrap.ants.ContainsKey(position))
-                    {
-                        DropoffItem(i);
-                    }
-                    else
-                    {
-                        // Update position of ball
-                        UpdateBallPosition(i, originalPosition);
-                    }
-                }
-                
+                UpdateAnt(i);
             }
-            timer = 0f;
-            Debug.Log("Balls size: " + Bootstrap.balls.Count);
         }
         else
         {
@@ -67,6 +45,37 @@ public class SwarmMechanics : ComponentSystem
             {
                 a_Data.Position[i] = new Position { Value = Vector3.Lerp(a_Data.StartPosition[i].Value, a_Data.NextPosition[i].Value, timeLeft) };
             }
+        }
+    }
+
+    private void UpdateAnt(int index)
+    {
+        position = Common.GetGridIndex(a_Data.NextPosition[index].Value);
+        // Compute F(x) - Locality
+        CountLocality();
+
+        if (a_Data.Carrying[index].Value == Common.False && Bootstrap.balls.ContainsKey(position))
+        {
+            // IF unloaded and circle
+            PickupItem(index);
+        }
+        else if (a_Data.Carrying[index].Value == Common.True)
+        {
+            // ELSE IF loaded and empty
+            DropoffItem(index);
+        }
+
+        // Handle movement
+        if (a_Data.Carrying[index].Value == Common.False)
+        {
+            // Move rando no ants
+            UpdateAntPosition(index);
+        }
+        else
+        {
+            // Move rando no ants no balls
+            UpdateAntPosition(index, true);
+            UpdateBallPosition(index);
         }
     }
 
@@ -82,40 +91,58 @@ public class SwarmMechanics : ComponentSystem
         }
     }
 
-    private void UpdatePosition(int index)
+    private void UpdateAntPosition(int index, bool noBalls = false)
     {
-        // Update positional data
         int loop_count = 0;
         int newPosition = GetPosition(Random.Range(0, 8));
-        int originalPosition = Common.GetGridIndex(a_Data.StartPosition[index].Value);
-
-        a_Data.StartPosition[index] = new StartPosition { Value = a_Data.NextPosition[index].Value };
-        if (a_Data.Carrying[index].Value == Common.True)
+        int prevPosition = Common.GetGridIndex(a_Data.NextPosition[index].Value);
+        bool redo = OnEdge(newPosition) || Bootstrap.ants.ContainsKey(newPosition);
+        if (noBalls)
         {
-            while ((OnEdge(newPosition) || Bootstrap.ants.ContainsKey(newPosition) || Bootstrap.balls.ContainsKey(newPosition)) && loop_count < loop_limit)
+            redo = redo || Bootstrap.balls.ContainsKey(newPosition);
+        }
+        while (redo && ++loop_count < loop_limit)
+        {
+            newPosition = GetPosition(Random.Range(0, 8));
+            redo = OnEdge(newPosition) || Bootstrap.ants.ContainsKey(newPosition);
+            if (noBalls)
             {
-                newPosition = GetPosition(Random.Range(0, 8));
-                ++loop_count;
+                redo = redo || Bootstrap.balls.ContainsKey(newPosition);
             }
+        }
+
+        if (loop_count != loop_limit)
+        {
+            // Remove from ants and set new start position
+            Bootstrap.ants.Remove(prevPosition);
+            a_Data.StartPosition[index] = new StartPosition { Value = a_Data.NextPosition[index].Value };
+            a_Data.Position[index] = new Position { Value = a_Data.StartPosition[index].Value };
+
+            // Add new start position and set next position
+            Bootstrap.ants.Add(newPosition, 0);
+            a_Data.NextPosition[index] = new NextPosition { Value = Common.GetGridLocation(newPosition) };
         }
         else
         {
-            while ((OnEdge(newPosition) || Bootstrap.ants.ContainsKey(newPosition)) && loop_count < loop_limit)
-            {
-                newPosition = GetPosition(Random.Range(0, 8));
-                ++loop_count;
-            }
-        }
-        if (loop_count != loop_limit)
-        {
-            a_Data.NextPosition[index] = new NextPosition { Value = Common.GetGridLocation(newPosition) };
+            // It stays still
+            a_Data.StartPosition[index] = new StartPosition { Value = a_Data.NextPosition[index].Value };
             a_Data.Position[index] = new Position { Value = a_Data.StartPosition[index].Value };
-            // After updating position clear the old one and store the new one
-            Bootstrap.ants.Remove(originalPosition);
-            Bootstrap.ants.Add(newPosition, 0);
+            Debug.Log("Ant is stuck...");
         }
-        // Else we were stuck in an infinite loop, stay still
     }
+
+    private void UpdateBallPosition(int index)
+    {
+        if (Bootstrap.balls.TryGetValue(position, out Entity ball))
+        {
+            // Remove ball from balls
+            Bootstrap.balls.Remove(position);
+            //Update ball to ant position
+            Bootstrap.em.SetComponentData(ball, new Position { Value = a_Data.NextPosition[index].Value });
+            Bootstrap.balls.Add(Common.GetGridIndex(a_Data.NextPosition[index].Value), ball);
+        }
+    }
+
 
     private int GetPosition(int pos)
     {
@@ -124,7 +151,7 @@ public class SwarmMechanics : ComponentSystem
         {
             case 0:
                 // Top Left
-                ret_val = position - Bootstrap.width - 1;
+                ret_val = position - (Bootstrap.width + 1);
                 break;
             case 1:
                 // Top Center
@@ -132,7 +159,7 @@ public class SwarmMechanics : ComponentSystem
                 break;
             case 2:
                 // Top Right
-                ret_val = position - Bootstrap.width + 1;
+                ret_val = position - (Bootstrap.width - 1);
                 break;
             case 3:
                 // Left
@@ -144,7 +171,7 @@ public class SwarmMechanics : ComponentSystem
                 break;
             case 5:
                 // Bottom Left
-                ret_val = position + Bootstrap.width - 1;
+                ret_val = position + (Bootstrap.width - 1);
                 break;
             case 6:
                 // Bottom Center
@@ -152,7 +179,10 @@ public class SwarmMechanics : ComponentSystem
                 break;
             case 7:
                 // Bottom Right
-                ret_val = position + Bootstrap.width + 1;
+                ret_val = position + (Bootstrap.width + 1);
+                break;
+            default:
+                Debug.Log("How is this possible?");
                 break;
 
         }
@@ -208,25 +238,11 @@ public class SwarmMechanics : ComponentSystem
         }
     }
 
-    private void PickupItem(int index, int originalPosition)
+    private void PickupItem(int index)
     {
-        // Not sure where this cutoff will be yet
-        if (ProbabilityPickup() > 0.0f)
+        if (ProbabilityPickup() > 0.5f)
         {
             a_Data.Carrying[index] = new Carrying { Value = Common.True };
-            UpdateBallPosition(index, originalPosition);
-        }
-    }
-
-    private void UpdateBallPosition(int index, int originalPosition)
-    {
-        if (Bootstrap.balls.TryGetValue(originalPosition, out Entity ball))
-        {
-            // Remove ball from balls
-            Bootstrap.balls.Remove(originalPosition);
-            //Update ball to ant position
-            Bootstrap.em.SetComponentData(ball, new Position { Value = a_Data.NextPosition[index].Value });
-            Bootstrap.balls.Add(Common.GetGridIndex(a_Data.NextPosition[index].Value), ball);
         }
     }
 
@@ -237,14 +253,14 @@ public class SwarmMechanics : ComponentSystem
 
     private void DropoffItem(int index)
     {
-        if (ProbabilityDropoff() > 1.0f)
+        if (ProbabilityDropoff() > 0.5f)
         {
-
+            a_Data.Carrying[index] = new Carrying { Value = Common.False };
         }
     }
 
     private float ProbabilityDropoff()
     {
-        return 0f;
+        return Random.value;
     }
 }

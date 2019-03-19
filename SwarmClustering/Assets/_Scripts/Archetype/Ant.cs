@@ -10,7 +10,6 @@ public static class Ant
 
     public static void CreateAnt(ref Entity ant, ref EntityManager em, int position)
     {
-        ant = em.CreateEntity(antArchetype);
         em.SetComponentData(ant, new Position { Value = Common.GetGridLocation(position) });
         em.SetComponentData(ant, new Carrying { Value = Common.False });
         em.SetComponentData(ant, new StartPosition { Value = Common.GetGridLocation(position) });
