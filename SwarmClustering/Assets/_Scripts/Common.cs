@@ -3,6 +3,8 @@ using Unity.Rendering;
 using UnityEngine;
 public class Common
 {
+    public const int loop_limit = 100;
+
     /// <summary>
     /// Returns the mesh for the given string
     /// </summary>

@@ -9,7 +9,10 @@ public class SwarmMechanics : ComponentSystem
     private static int red;
     private static int blue;
     private static int modifier = -1;
-    private const int loop_limit = 100;
+
+    // Pickup/Dropoff probability constants
+    private const float k1 = 1f;
+    private const float k2 = 0.25f;
 
     public struct AntData
     {
@@ -101,7 +104,7 @@ public class SwarmMechanics : ComponentSystem
         {
             redo = redo || Bootstrap.balls.ContainsKey(newPosition);
         }
-        while (redo && ++loop_count < loop_limit)
+        while (redo && ++loop_count < Common.loop_limit)
         {
             newPosition = GetPosition(Random.Range(0, 8));
             redo = OnEdge(newPosition) || Bootstrap.ants.ContainsKey(newPosition);
@@ -111,7 +114,7 @@ public class SwarmMechanics : ComponentSystem
             }
         }
 
-        if (loop_count != loop_limit)
+        if (loop_count != Common.loop_limit)
         {
             // Remove from ants and set new start position
             Bootstrap.ants.Remove(prevPosition);
@@ -215,32 +218,33 @@ public class SwarmMechanics : ComponentSystem
 
     private void UpdateRedBlue()
     {
-        if (modifier == Common.Red)
+        switch (modifier)
         {
-            ++red;
-        }
-        else if (modifier == Common.Blue)
-        {
-            ++blue;
-        }
-        else
-        {
-            Debug.Log("shouldn't happen to modifiers...");
+            case Common.Red:
+                ++red;
+                break;
+            case Common.Blue:
+                ++blue;
+                break;
+            default:
+                modifier = -1;
+                break;
         }
         modifier = -1;
     }
 
     private void CheckLocality(int checkPosition)
     {
-        if (Bootstrap.ants.TryGetValue(checkPosition, out modifier))
+        if (Bootstrap.balls.TryGetValue(checkPosition, out Entity ball))
         {
+            modifier = Bootstrap.em.GetComponentData<Faction>(ball).Value;
             UpdateRedBlue();
         }
     }
 
     private void PickupItem(int index)
     {
-        if (ProbabilityPickup() > 0.5f)
+        if (ProbabilityPickup() > Random.value)
         {
             a_Data.Carrying[index] = new Carrying { Value = Common.True };
         }
@@ -248,19 +252,48 @@ public class SwarmMechanics : ComponentSystem
 
     private float ProbabilityPickup()
     {
-        return Random.value;
+        if(Bootstrap.balls.TryGetValue(position, out Entity ball))
+        {
+            switch (Bootstrap.em.GetComponentData<Faction>(ball).Value)
+            {
+                case Common.Red:
+                    return Mathf.Pow(k1 / (k1 + red), 1f);
+                case Common.Blue:
+                    return Mathf.Pow(k1 / (k1 + blue), 1f);
+            }
+        }
+        else
+        {
+            Debug.Log("PICKUP NO BALL");
+        }
+        return 0f;
     }
 
     private void DropoffItem(int index)
     {
-        if (ProbabilityDropoff() > 0.5f)
+        if (ProbabilityDropoff() > Random.value)
         {
             a_Data.Carrying[index] = new Carrying { Value = Common.False };
+            //Debug.Log("Dropping off!");
         }
     }
 
     private float ProbabilityDropoff()
     {
-        return Random.value;
+        if (Bootstrap.balls.TryGetValue(position, out Entity ball))
+        {
+            switch (Bootstrap.em.GetComponentData<Faction>(ball).Value)
+            {
+                case Common.Red:
+                    return Mathf.Pow(red / (k2 + red), 2f);
+                case Common.Blue:
+                    return Mathf.Pow(blue / (k2 + blue), 2f);
+            }
+        }
+        else
+        {
+            Debug.Log("WHAT");
+        }
+        return 0f;
     }
 }
