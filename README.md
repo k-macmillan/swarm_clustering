@@ -1,9 +1,5 @@
 # Swarm Clustering
 
-Player controller and ants spawned/moving:
+Ants clustering items:
 
-[![Ant Movement](https://img.youtube.com/vi/scpzqlKO88k/0.jpg)](https://www.youtube.com/watch?v=scpzqlKO88k "Ant Movement")
-
-Ants picking up items:
-
-[![Ant Pickup](https://img.youtube.com/vi/IJ7V_UcZyWY/0.jpg)](https://www.youtube.com/watch?v=IJ7V_UcZyWY "Ant Pickup")
+[![Ant Clustering](https://img.youtube.com/vi/I6wfpuZtkdM/0.jpg)](https://www.youtube.com/watch?v=I6wfpuZtkdM "Ant Clustering")
