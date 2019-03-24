@@ -16,8 +16,8 @@ public sealed class BallBootstrap
 
     public static void InitializeWithScene()
     {
-        Ball.ballBlueMesh = Common.GetLookFromPrototype("BlueBallPrototype");
         Ball.ballRedMesh = Common.GetLookFromPrototype("RedBallPrototype");
+        Ball.ballBlueMesh = Common.GetLookFromPrototype("BlueBallPrototype");
     }
 
 

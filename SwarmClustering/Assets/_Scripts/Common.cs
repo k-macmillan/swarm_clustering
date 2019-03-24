@@ -4,6 +4,11 @@ using UnityEngine;
 public class Common
 {
     public const int loop_limit = 100;
+    public static int width = 200;
+    public static int height = 200;
+    public static int max_value = width * height - 1;
+    public static float Delay = 0.15625f;
+
 
     /// <summary>
     /// Returns the mesh for the given string
@@ -20,12 +25,12 @@ public class Common
 
     public static float3 GetGridLocation(int position)
     {
-        return new float3(position / Bootstrap.width, 1, position % Bootstrap.width);
+        return new float3(position / width, 1, position % width);
     }
 
     public static int GetGridIndex(float3 position)
     {
-        return (int)(position.x * Bootstrap.width + position.z);
+        return (int)(position.x * width + position.z);
     }
 
     // Ball colors

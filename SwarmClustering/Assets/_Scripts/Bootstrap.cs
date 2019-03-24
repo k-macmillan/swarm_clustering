@@ -8,11 +8,8 @@ public class Bootstrap
     public static EntityManager em;
     public static Dictionary<int, int> ants = new Dictionary<int, int>();
     public static Dictionary<int, Entity> balls = new Dictionary<int, Entity>();
-    public static int width = 200;
-    public static int height= 200;
-    public static int max_value = width * height - 1;
+    
     public static GameObject camera;
-    public static float Delay = 0.15625f;
 
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -47,10 +44,10 @@ public class Bootstrap
     {
 
         // Place Balls
-        for (int i = 0; i < 100; ++i)
+        for (int i = 0; i < 500; ++i)
         {
-            GenerateBall(Common.Blue);
             GenerateBall(Common.Red);
+            GenerateBall(Common.Blue);
         }
 
         // Place Ants
@@ -63,10 +60,10 @@ public class Bootstrap
     private static void GenerateBall(int color)
     {
         int loop_count = 0;
-        int position = Random.Range(0, max_value);
+        int position = Random.Range(0, Common.max_value);
         while ((balls.ContainsKey(position) || ants.ContainsKey(position)) && loop_count < Common.loop_limit)
         {
-            position = Random.Range(0, max_value);
+            position = Random.Range(0, Common.max_value);
             ++loop_count;
         }
         if (loop_count != Common.loop_limit)
@@ -80,10 +77,10 @@ public class Bootstrap
     private static void GenerateAnt()
     {
         int loop_count = 0;
-        int position = Random.Range(0, max_value);
+        int position = Random.Range(0, Common.max_value);
         while ((balls.ContainsKey(position) || ants.ContainsKey(position)) && loop_count < Common.loop_limit)
         {
-            position = Random.Range(0, max_value);
+            position = Random.Range(0, Common.max_value);
             ++loop_count;
         }
         if (loop_count != Common.loop_limit)
@@ -101,9 +98,9 @@ public class Bootstrap
 
     private void TestCase()
     {
-        width = 5;
-        height = 5;
-        max_value = width * height - 1;
+        Common.width = 5;
+        Common.height = 5;
+        Common.max_value = Common.width * Common.height - 1;
 
         // Center
         Entity ball = em.CreateEntity(Ball.ballArchetype);

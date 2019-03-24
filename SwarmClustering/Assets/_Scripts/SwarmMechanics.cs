@@ -31,7 +31,7 @@ public class SwarmMechanics : ComponentSystem
     {
         // Every Bootstrap.Delay seconds update the ants
         timer += Time.deltaTime;
-        if (timer >= Bootstrap.Delay)
+        if (timer >= Common.Delay)
         {
             timer = 0f;
             // Update new direction/actions
@@ -43,7 +43,7 @@ public class SwarmMechanics : ComponentSystem
         else
         {
             // LERP postional movement
-            float timeLeft = 1 - (Bootstrap.Delay - timer) / Bootstrap.Delay;            
+            float timeLeft = 1 - (Common.Delay - timer) / Common.Delay;            
             for (int i = 0; i < a_Data.Length; ++i)
             {
                 a_Data.Position[i] = new Position { Value = Vector3.Lerp(a_Data.StartPosition[i].Value, a_Data.NextPosition[i].Value, timeLeft) };
@@ -130,7 +130,9 @@ public class SwarmMechanics : ComponentSystem
             // It stays still
             a_Data.StartPosition[index] = new StartPosition { Value = a_Data.NextPosition[index].Value };
             a_Data.Position[index] = new Position { Value = a_Data.StartPosition[index].Value };
+#if UNITY_EDITOR
             Debug.Log("Ant is stuck...");
+#endif
         }
     }
 
@@ -154,15 +156,15 @@ public class SwarmMechanics : ComponentSystem
         {
             case 0:
                 // Top Left
-                ret_val = position - (Bootstrap.width + 1);
+                ret_val = position - (Common.width + 1);
                 break;
             case 1:
                 // Top Center
-                ret_val = position - Bootstrap.width;
+                ret_val = position - Common.width;
                 break;
             case 2:
                 // Top Right
-                ret_val = position - (Bootstrap.width - 1);
+                ret_val = position - (Common.width - 1);
                 break;
             case 3:
                 // Left
@@ -174,18 +176,21 @@ public class SwarmMechanics : ComponentSystem
                 break;
             case 5:
                 // Bottom Left
-                ret_val = position + (Bootstrap.width - 1);
+                ret_val = position + (Common.width - 1);
                 break;
             case 6:
                 // Bottom Center
-                ret_val = position + Bootstrap.width;
+                ret_val = position + Common.width;
                 break;
             case 7:
                 // Bottom Right
-                ret_val = position + (Bootstrap.width + 1);
+                ret_val = position + (Common.width + 1);
                 break;
             default:
+#if UNITY_EDITOR
+
                 Debug.Log("How is this possible?");
+#endif
                 break;
 
         }
@@ -194,19 +199,19 @@ public class SwarmMechanics : ComponentSystem
 
     private bool OnEdge(int newPosition)
     {
-        if (newPosition < Bootstrap.width)
+        if (newPosition < Common.width)
         {
             return true;
         }
-        else if (newPosition % Bootstrap.width == 0)
+        else if (newPosition % Common.width == 0)
         {
             return true;
         }
-        else if (newPosition % Bootstrap.width == Bootstrap.width - 1)
+        else if (newPosition % Common.width == Common.width - 1)
         {
             return true;
         }
-        else if (newPosition >= Bootstrap.max_value - Bootstrap.width)
+        else if (newPosition >= Common.max_value - Common.width)
         {
             return true;
         }
@@ -257,14 +262,12 @@ public class SwarmMechanics : ComponentSystem
             switch (Bootstrap.em.GetComponentData<Faction>(ball).Value)
             {
                 case Common.Red:
-                    return Mathf.Pow(k1 / (k1 + red), 1f);
+                    //return Mathf.Pow(k1 / (k1 + red), 1f);
+                    return 1f - 0.9f * Mathf.Pow(0.5f * (red - 2f), 3f) - 0.9f;
                 case Common.Blue:
-                    return Mathf.Pow(k1 / (k1 + blue), 1f);
+                    //return Mathf.Pow(k1 / (k1 + blue), 1f);
+                    return 1f - 0.9f * Mathf.Pow(0.5f * (blue - 2f), 3f) - 0.9f;
             }
-        }
-        else
-        {
-            Debug.Log("PICKUP NO BALL");
         }
         return 0f;
     }
@@ -274,7 +277,6 @@ public class SwarmMechanics : ComponentSystem
         if (ProbabilityDropoff() > Random.value)
         {
             a_Data.Carrying[index] = new Carrying { Value = Common.False };
-            //Debug.Log("Dropping off!");
         }
     }
 
@@ -285,14 +287,12 @@ public class SwarmMechanics : ComponentSystem
             switch (Bootstrap.em.GetComponentData<Faction>(ball).Value)
             {
                 case Common.Red:
-                    return Mathf.Pow(red / (k2 + red), 2f);
+                    //return Mathf.Pow(red / (k2 + red), 2f);
+                    return 0.4f * Mathf.Pow(red - 2f, 3f) + Mathf.Pow(red / (0.25f + red), 2f);
                 case Common.Blue:
-                    return Mathf.Pow(blue / (k2 + blue), 2f);
+                    //return Mathf.Pow(blue / (k2 + blue), 2f);
+                    return 0.4f * Mathf.Pow(blue - 2f, 3f) + Mathf.Pow(blue / (0.25f + blue), 2f);
             }
-        }
-        else
-        {
-            Debug.Log("WHAT");
         }
         return 0f;
     }

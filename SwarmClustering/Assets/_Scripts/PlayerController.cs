@@ -6,7 +6,7 @@ public class PlayerController : ComponentSystem
     public static float pitch = 0;
     public static float yaw = 0;
     public static double timer = 0d;
-    public const double delay = 0.5d;
+    public const double delay = 0.25d;
     public const float speed = 0.5f;
 
 
@@ -81,10 +81,10 @@ public class PlayerController : ComponentSystem
         {
             if (timer > delay)
             {
-                Bootstrap.Delay -= 0.015625f;
-                if (Bootstrap.Delay < 0f)
+                Common.Delay -= 0.015625f;
+                if (Common.Delay < 0f)
                 {
-                    Bootstrap.Delay = 0f;
+                    Common.Delay = 0f;
                 }
                 timer = 0;
             }
@@ -93,10 +93,10 @@ public class PlayerController : ComponentSystem
         {
             if (timer > delay)
             {
-                Bootstrap.Delay += 0.015625f;
-                if (Bootstrap.Delay > 0.3125f)
+                Common.Delay += 0.015625f;
+                if (Common.Delay > 0.3125f)
                 {
-                    Bootstrap.Delay = 0.3125f;
+                    Common.Delay = 0.3125f;
                 }
                 timer = 0;
             }
