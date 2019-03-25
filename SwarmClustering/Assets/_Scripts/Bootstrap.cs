@@ -35,7 +35,7 @@ public class Bootstrap
 
     public static void NewGame()
     {
-        // TestCase();
+        //TestCase();
         InitializeGame();
         Run();
     }
@@ -96,7 +96,7 @@ public class Bootstrap
 
     }
 
-    private void TestCase()
+    private static void TestCase()
     {
         Common.width = 5;
         Common.height = 5;

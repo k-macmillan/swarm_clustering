@@ -9,6 +9,7 @@ public class SwarmMechanics : ComponentSystem
     private static int red;
     private static int blue;
     private static int modifier = -1;
+    private static int[] Edge = { 0, 0, 0, 0 };
 
     // Pickup/Dropoff probability constants
     private const float k1 = 1f;
@@ -99,7 +100,7 @@ public class SwarmMechanics : ComponentSystem
         int loop_count = 0;
         int newPosition = GetPosition(Random.Range(0, 8));
         int prevPosition = Common.GetGridIndex(a_Data.NextPosition[index].Value);
-        bool redo = OnEdge(newPosition) || Bootstrap.ants.ContainsKey(newPosition);
+        bool redo = InvalidMove(newPosition);
         if (noBalls)
         {
             redo = redo || Bootstrap.balls.ContainsKey(newPosition);
@@ -107,23 +108,29 @@ public class SwarmMechanics : ComponentSystem
         while (redo && ++loop_count < Common.loop_limit)
         {
             newPosition = GetPosition(Random.Range(0, 8));
-            redo = OnEdge(newPosition) || Bootstrap.ants.ContainsKey(newPosition);
+            redo = InvalidMove(newPosition);
             if (noBalls)
             {
                 redo = redo || Bootstrap.balls.ContainsKey(newPosition);
             }
         }
 
-        if (loop_count != Common.loop_limit)
+        if (loop_count < Common.loop_limit)
         {
-            // Remove from ants and set new start position
-            Bootstrap.ants.Remove(prevPosition);
-            a_Data.StartPosition[index] = new StartPosition { Value = a_Data.NextPosition[index].Value };
-            a_Data.Position[index] = new Position { Value = a_Data.StartPosition[index].Value };
+            if (!InvalidMove(newPosition)) {
+                // Remove from ants and set new start position
+                Bootstrap.ants.Remove(prevPosition);
+                a_Data.StartPosition[index] = new StartPosition { Value = a_Data.NextPosition[index].Value };
+                a_Data.Position[index] = new Position { Value = a_Data.StartPosition[index].Value };
 
-            // Add new start position and set next position
-            Bootstrap.ants.Add(newPosition, 0);
-            a_Data.NextPosition[index] = new NextPosition { Value = Common.GetGridLocation(newPosition) };
+                // Add new start position and set next position
+                Bootstrap.ants.Add(newPosition, 0);
+                a_Data.NextPosition[index] = new NextPosition { Value = Common.GetGridLocation(newPosition) };
+            }
+            else
+            {
+                Debug.Log("Why was this invalid?");
+            }
         }
         else
         {
@@ -132,6 +139,8 @@ public class SwarmMechanics : ComponentSystem
             a_Data.Position[index] = new Position { Value = a_Data.StartPosition[index].Value };
 #if UNITY_EDITOR
             Debug.Log("Ant is stuck...");
+            Debug.Log(position);
+            Debug.Log("Max value: " + Common.max_value);
 #endif
         }
     }
@@ -146,6 +155,55 @@ public class SwarmMechanics : ComponentSystem
             Bootstrap.em.SetComponentData(ball, new Position { Value = a_Data.NextPosition[index].Value });
             Bootstrap.balls.Add(Common.GetGridIndex(a_Data.NextPosition[index].Value), ball);
         }
+    }
+
+    private bool InvalidMove(int pos)
+    {
+        bool ret_val = Bootstrap.ants.ContainsKey(pos);
+        if (ret_val)
+            return true;
+
+
+        if (EdgeValue())
+        {
+            if (Edge[Common.Top] == 1)
+            {
+                Edge[0] = 0;
+                if (pos < 0)
+                {
+                    ret_val = true;
+                }
+            }
+
+            if (Edge[Common.Left] == 1)
+            {
+                Edge[1] = 0;
+                if (pos - 1 % Common.width == Common.width - 1)
+                {
+                    ret_val = true;
+                }
+            }
+
+            if (Edge[Common.Right] == 1)
+            {
+                Edge[2] = 0;
+                if (pos % Common.width == 0)
+                {
+                    ret_val = true;
+                }
+            }
+
+            if (Edge[Common.Bottom] == 1)
+            {
+                Edge[3] = 0;
+                if (pos > Common.max_value)
+                {
+                    ret_val = true;
+                }
+            }
+        }
+
+        return ret_val;
     }
 
 
@@ -197,28 +255,29 @@ public class SwarmMechanics : ComponentSystem
         return ret_val;
     }
 
-    private bool OnEdge(int newPosition)
+    private bool EdgeValue()
     {
-        if (newPosition < Common.width)
+        if (position < Common.width)
         {
+            Edge[Common.Top] = 1;
             return true;
         }
-        else if (newPosition % Common.width == 0)
+        if (position % Common.width == 0)
         {
+            Edge[Common.Left] = 1;
             return true;
         }
-        else if (newPosition % Common.width == Common.width - 1)
+        if (position % Common.width == Common.width - 1)
         {
+            Edge[Common.Right] = 1;
             return true;
         }
-        else if (newPosition >= Common.max_value - Common.width)
+        if (position > (Common.max_value - Common.width))
         {
+            Edge[Common.Bottom] = 1;
             return true;
         }
-        else
-        {
-            return false;
-        }
+        return false;
     }
 
     private void UpdateRedBlue()

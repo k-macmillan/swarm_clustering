@@ -40,4 +40,10 @@ public class Common
     // Am I crazy?
     public const int False = 0;
     public const int True = 1;
+
+    // Edges
+    public const int Top = 0;
+    public const int Left = 1;
+    public const int Right = 2;
+    public const int Bottom = 3;
 }
