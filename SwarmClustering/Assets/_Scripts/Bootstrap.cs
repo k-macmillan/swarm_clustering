@@ -61,10 +61,9 @@ public class Bootstrap
     {
         int loop_count = 0;
         int position = Random.Range(0, Common.max_value);
-        while ((balls.ContainsKey(position) || ants.ContainsKey(position)) && loop_count < Common.loop_limit)
+        while ((balls.ContainsKey(position) || ants.ContainsKey(position)) && ++loop_count < Common.loop_limit)
         {
             position = Random.Range(0, Common.max_value);
-            ++loop_count;
         }
         if (loop_count != Common.loop_limit)
         {
@@ -78,12 +77,11 @@ public class Bootstrap
     {
         int loop_count = 0;
         int position = Random.Range(0, Common.max_value);
-        while ((balls.ContainsKey(position) || ants.ContainsKey(position)) && loop_count < Common.loop_limit)
+        while ((balls.ContainsKey(position) || ants.ContainsKey(position)) && ++loop_count < Common.loop_limit)
         {
             position = Random.Range(0, Common.max_value);
-            ++loop_count;
         }
-        if (loop_count != Common.loop_limit)
+        if (loop_count < Common.loop_limit)
         {
             Entity ant = em.CreateEntity(Ant.antArchetype);
             Ant.CreateAnt(ref ant, ref em, position);

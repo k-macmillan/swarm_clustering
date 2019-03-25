@@ -8,6 +8,7 @@ public class Common
     public static int height = 200;
     public static int max_value = width * height - 1;
     public static float Delay = 0.15625f;
+    public static float3 vecOffset = new float3(0.125f, 0f, 0f);
 
 
     /// <summary>
@@ -25,12 +26,12 @@ public class Common
 
     public static float3 GetGridLocation(int position)
     {
-        return new float3(position / width, 1, position % width);
+        return new float3(position % width, 1, position / height);
     }
 
     public static int GetGridIndex(float3 position)
     {
-        return (int)(position.x * width + position.z);
+        return (int)(position.z * width + position.x);
     }
 
     // Ball colors
