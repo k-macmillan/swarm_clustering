@@ -38,7 +38,6 @@ public class Bootstrap
         GameObject terrain = GameObject.Find("Terrain").gameObject;
         var terrainComponent = terrain.GetComponent<Terrain>();
         terrainComponent.terrainData.size = new Vector3(Common.width + 10, 1, Common.height + 10);
-        //Debug.Log();
     }
 
     private static void UpdateCamera()
