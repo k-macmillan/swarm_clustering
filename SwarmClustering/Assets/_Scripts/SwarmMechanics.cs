@@ -6,13 +6,13 @@ public class SwarmMechanics : ComponentSystem
 {
     private static float timer = 0f;
     private static int position;
-    private static int x;
-    private static int z;
-    private static int red;
-    private static int blue;
-    private static int green;
-    private static int yellow;
-    private static int purple;
+    private static int pos_x;
+    private static int pos_z;
+    private static float red;
+    private static float blue;
+    private static float green;
+    private static float yellow;
+    private static float purple;
 
     private static int modifier = -1;
     private static bool meshEnabled = true;
@@ -94,11 +94,12 @@ public class SwarmMechanics : ComponentSystem
     private void UpdateAnt(int index)
     {
         position = Common.GetGridIndex(a_Data.NextPosition[index].Value);
-        x = (int)a_Data.NextPosition[index].Value.x;
-        z = (int)a_Data.NextPosition[index].Value.z;
+        pos_x = (int)a_Data.NextPosition[index].Value.x;
+        pos_z = (int)a_Data.NextPosition[index].Value.z;
 
         // Compute F(x) - Locality
-        CountLocality();
+        UpdateLocality();
+        //CountLocality();
 
         if (a_Data.Carrying[index].Value == Common.False && Bootstrap.balls.ContainsKey(position))
         {
@@ -125,7 +126,7 @@ public class SwarmMechanics : ComponentSystem
         }
     }
 
-    private void CountLocality()
+    private void UpdateLocality()
     {
         red = 0;
         blue = 0;
@@ -133,10 +134,15 @@ public class SwarmMechanics : ComponentSystem
         yellow = 0;
         purple = 0;
 
-        // I am allowing this space to act as a Torus, ignoring the edges.
-        for (int i = 0; i < 8; ++i)
+        for (int i = -Common.radius; i <= Common.radius; ++i)
         {
-            CheckLocality(GetPosition(i));
+            for (int j = -Common.radius; j <= Common.radius; ++j)
+            {
+                if (OnGrid(pos_x + i, pos_z + j))
+                {
+                    CheckLocality(Common.GetGridIndex(pos_x + i, pos_z + j), Mathf.Max(Mathf.Max(Mathf.Abs(i), Mathf.Abs(j)), 1f));
+                }
+            }
         }
     }
 
@@ -169,12 +175,6 @@ public class SwarmMechanics : ComponentSystem
             a_Data.Position[index] = new Position { Value = a_Data.StartPosition[index].Value };
 
             // Add new start position and set next position
-            if (InvalidMove(newPosition))
-            {
-                Debug.Log("What happened?");
-                Debug.Log("Old: " + Common.GetGridLocation(position));
-                Debug.Log("New: " + Common.GetGridLocation(newPosition) + "\n");
-            }
             Bootstrap.ants.Add(newPosition, e);
             a_Data.NextPosition[index] = new NextPosition { Value = Common.GetGridLocation(newPosition) };
             
@@ -211,12 +211,7 @@ public class SwarmMechanics : ComponentSystem
 
         var p = Common.GetGridLocation(pos);
 
-        if (Mathf.Abs(x - p.x) > 1.1f || p.x > Common.width || p.x < 0)
-        {
-            return true;
-        }
-
-        if (Mathf.Abs(z - p.z) > 1.1f || p.z > Common.height || p.z < 0)
+        if (!OnGrid(p.x, p.z) || !InRange(p.x, p.z))
         {
             return true;
         }
@@ -224,6 +219,50 @@ public class SwarmMechanics : ComponentSystem
         return false;
     }
 
+    private bool InRange(float x, float z)
+    {
+        if (Mathf.Abs(pos_x - x) > 1f)
+        {
+            return false;
+        }
+
+        if (Mathf.Abs(pos_z - z) > 1f)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool OnGrid(float x, float z)
+    {
+        if (x >= Common.width || x < 0f)
+        {
+            return false;
+        }
+
+        if (z >= Common.height || z < 0f)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool OnGrid(int x, int z)
+    {
+        if (x >= Common.width || x < 0f)
+        {
+            return false;
+        }
+
+        if (z >= Common.height || z < 0f)
+        {
+            return false;
+        }
+
+        return true;
+    }
 
     private int GetPosition(int pos)
     {
@@ -273,24 +312,24 @@ public class SwarmMechanics : ComponentSystem
         return ret_val;
     }
 
-    private void UpdateBalls()
+    private void UpdateBalls(float dist)
     {
         switch (modifier)
         {
             case Common.Red:
-                ++red;
+                red += 1 / dist;
                 break;
             case Common.Blue:
-                ++blue;
+                blue += 1 / dist;
                 break;
             case Common.Green:
-                ++green;
+                green += 1 / dist;
                 break;
             case Common.Yellow:
-                ++yellow;
+                yellow += 1 / dist;
                 break;
             case Common.Purple:
-                ++purple;
+                purple += 1 / dist;
                 break;
             default:
                 modifier = -1;
@@ -299,12 +338,12 @@ public class SwarmMechanics : ComponentSystem
         modifier = -1;
     }
 
-    private void CheckLocality(int checkPosition)
+    private void CheckLocality(int checkPosition, float dist)
     {
         if (Bootstrap.balls.TryGetValue(checkPosition, out Entity ball))
         {
             modifier = Bootstrap.em.GetComponentData<Faction>(ball).Value;
-            UpdateBalls();
+            UpdateBalls(Mathf.Pow(dist, 3f));
         }
     }
 
@@ -321,7 +360,7 @@ public class SwarmMechanics : ComponentSystem
         // If we end up going with 5x5 locality check: http://www.xuru.org/rt/PR.asp
         if (Bootstrap.balls.TryGetValue(position, out Entity ball))
         {
-            int count = 0;
+            float count = 0;
             switch (Bootstrap.em.GetComponentData<Faction>(ball).Value)
             {
                 case Common.Red:
@@ -340,8 +379,9 @@ public class SwarmMechanics : ComponentSystem
                     count = purple;
                     break;
             }
-            //return Mathf.Pow(k1 / (k1 + count), 1f);
-            return 1f - 0.9f * Mathf.Pow(0.5f * (count - 2f), 3f) - 0.9f;
+            return 0.1f - 0.7f * Mathf.Pow(0.4f * (count - 1.5f), 3f);
+            // Proportional comparison
+            //return 1f / ((Mathf.Pow(count - 1f, 4f) / Common.areaValue[Common.radius]) + 1f);
         }
         return 0f;
     }
@@ -358,7 +398,7 @@ public class SwarmMechanics : ComponentSystem
     {
         if (Bootstrap.balls.TryGetValue(position, out Entity ball))
         {
-            int count = 0;
+            float count = 0;
             switch (Bootstrap.em.GetComponentData<Faction>(ball).Value)
             {
                 case Common.Red:
@@ -377,8 +417,10 @@ public class SwarmMechanics : ComponentSystem
                     count = purple;
                     break;
             }
-            //return Mathf.Pow(count / (k2 + count), 2f);
-            return 0.4f * Mathf.Pow(count - 2f, 3f) + Mathf.Pow(count / (0.25f + count), 2f);
+            return 0.4f * Mathf.Pow(count - 2.175f, 3f) + Mathf.Pow(count / (0.25f + count), 2f);
+            // Proportional comparison
+            //return (Mathf.Pow(count - 1f, 2f) / Common.areaValue[Common.radius]) / (1f + (Mathf.Pow(count - 3f, 2f) / Common.areaValue[Common.radius]));
+
         }
         return 0f;
     }

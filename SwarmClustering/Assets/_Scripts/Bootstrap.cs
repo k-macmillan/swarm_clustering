@@ -56,15 +56,14 @@ public class Bootstrap
 
     private static void InitializeGame()
     {
-
         // Place Balls
         for (int i = 0; i < Common.balls; ++i)
         {
             GenerateBall(Common.Red);
             GenerateBall(Common.Blue);
-            GenerateBall(Common.Green);
-            GenerateBall(Common.Yellow);
-            GenerateBall(Common.Purple);
+            //GenerateBall(Common.Green);
+            //GenerateBall(Common.Yellow);
+            //GenerateBall(Common.Purple);
         }
 
         // Place Ants
@@ -116,6 +115,8 @@ public class Bootstrap
         Common.width = 5;
         Common.height = 5;
         Common.max_value = Common.width * Common.height - 1;
+        UpdateTerrain();
+        UpdateCamera();
 
         // Center
         Entity ball = em.CreateEntity(Ball.ballArchetype);
