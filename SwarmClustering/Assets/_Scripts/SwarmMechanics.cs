@@ -1,4 +1,5 @@
 ﻿using Unity.Entities;
+using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -11,6 +12,9 @@ public class SwarmMechanics : ComponentSystem
     private static int modifier = -1;
     private static int[] Edge = { 0, 0, 0, 0 };
     private static bool edge = false;
+    private static bool meshEnabled = true;
+
+    public static bool meshToggle = false;
 
     // Pickup/Dropoff probability constants
     private const float k1 = 1f;
@@ -51,6 +55,39 @@ public class SwarmMechanics : ComponentSystem
                 a_Data.Position[i] = new Position { Value = Vector3.Lerp(a_Data.StartPosition[i].Value, a_Data.NextPosition[i].Value, timeLeft) };
             }
         }
+
+        if (meshToggle)
+        {
+            ToggleAntMesh();
+        }
+    }
+
+    private void ToggleAntMesh()
+    {
+        if (meshEnabled)
+        {
+            for (int i = 0; i < a_Data.Length; ++i)
+            {
+                if (Bootstrap.ants.TryGetValue(Common.GetGridIndex(a_Data.NextPosition[i].Value), out Entity e))
+                {
+                    PostUpdateCommands.RemoveComponent<MeshInstanceRenderer>(e);
+                    PostUpdateCommands.AddSharedComponent(e, Ant.antMeshOff);
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < a_Data.Length; ++i)
+            {
+                if (Bootstrap.ants.TryGetValue(Common.GetGridIndex(a_Data.NextPosition[i].Value), out Entity e))
+                {
+                    PostUpdateCommands.RemoveComponent<MeshInstanceRenderer>(e);
+                    PostUpdateCommands.AddSharedComponent(e, Ant.antMeshOn);
+                }
+            }
+        }
+        meshEnabled = !meshEnabled;
+        meshToggle = false;
     }
 
     private void UpdateAnt(int index)
@@ -120,12 +157,13 @@ public class SwarmMechanics : ComponentSystem
         if (loop_count < Common.loop_limit)
         {
             // Remove from ants and set new start position
+            Bootstrap.ants.TryGetValue(prevPosition, out Entity e);
             Bootstrap.ants.Remove(prevPosition);
             a_Data.StartPosition[index] = new StartPosition { Value = a_Data.NextPosition[index].Value };
             a_Data.Position[index] = new Position { Value = a_Data.StartPosition[index].Value };
 
             // Add new start position and set next position
-            Bootstrap.ants.Add(newPosition, 0);
+            Bootstrap.ants.Add(newPosition, e);
             a_Data.NextPosition[index] = new NextPosition { Value = Common.GetGridLocation(newPosition) };
         }
         else
@@ -312,7 +350,8 @@ public class SwarmMechanics : ComponentSystem
 
     private float ProbabilityPickup()
     {
-        if(Bootstrap.balls.TryGetValue(position, out Entity ball))
+        // If we end up going with 5x5 locality check: http://www.xuru.org/rt/PR.asp
+        if (Bootstrap.balls.TryGetValue(position, out Entity ball))
         {
             switch (Bootstrap.em.GetComponentData<Faction>(ball).Value)
             {

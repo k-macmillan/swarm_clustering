@@ -1,12 +1,14 @@
 ﻿using Unity.Entities;
 using Unity.Rendering;
 using Unity.Transforms;
+using UnityEngine;
 
 public static class Ant
 {
     public static EntityArchetype antArchetype;
 
-    public static MeshInstanceRenderer antMesh;
+    public static MeshInstanceRenderer antMeshOn;
+    public static MeshInstanceRenderer antMeshOff;
 
     public static void CreateAnt(ref Entity ant, ref EntityManager em, int position)
     {
@@ -15,6 +17,6 @@ public static class Ant
         em.SetComponentData(ant, new StartPosition { Value = Common.GetGridLocation(position) });
         em.SetComponentData(ant, new NextPosition { Value = Common.GetGridLocation(position) });
 
-        em.AddSharedComponentData(ant, antMesh);
+        em.AddSharedComponentData(ant, antMeshOn);
     }
 }

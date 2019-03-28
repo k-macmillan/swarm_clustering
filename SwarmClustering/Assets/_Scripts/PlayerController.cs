@@ -41,6 +41,15 @@ public class PlayerController : ComponentSystem
         UpdatePosition();
         HandleSpeedChange();
         HandleExit();
+        HandleAntToggle();
+    }
+
+    private void HandleAntToggle()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            SwarmMechanics.meshToggle = true;
+        }
     }
 
     private void UpdatePosition()

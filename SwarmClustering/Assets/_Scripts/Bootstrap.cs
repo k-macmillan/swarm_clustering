@@ -6,7 +6,7 @@ using UnityEngine;
 public class Bootstrap
 {
     public static EntityManager em;
-    public static Dictionary<int, int> ants = new Dictionary<int, int>();
+    public static Dictionary<int, Entity> ants = new Dictionary<int, Entity>();
     public static Dictionary<int, Entity> balls = new Dictionary<int, Entity>();
     
     public static GameObject camera;
@@ -85,7 +85,7 @@ public class Bootstrap
         {
             Entity ant = em.CreateEntity(Ant.antArchetype);
             Ant.CreateAnt(ref ant, ref em, position);
-            ants.Add(position, 0);
+            ants.Add(position, ant);
         }
     }
 
@@ -113,7 +113,7 @@ public class Bootstrap
         // Ant
         Entity ant = em.CreateEntity(Ant.antArchetype);
         Ant.CreateAnt(ref ant, ref em, 0);
-        ants.Add(0, 0);
+        ants.Add(0, ant);
 
         // Border
         // Edge

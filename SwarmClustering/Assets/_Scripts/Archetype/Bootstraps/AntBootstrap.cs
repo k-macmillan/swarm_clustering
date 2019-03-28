@@ -18,7 +18,8 @@ public sealed class AntBootstrap
 
     public static void InitializeWithScene()
     {
-        Ant.antMesh = Common.GetLookFromPrototype("AntBodyPrototype");
+        Ant.antMeshOn = Common.GetLookFromPrototype("AntBodyPrototype");
+        Ant.antMeshOff = Common.GetLookFromPrototype("AntBodyOffPrototype");
     }
 
 
