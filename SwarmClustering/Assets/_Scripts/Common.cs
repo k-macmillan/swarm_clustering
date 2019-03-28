@@ -37,6 +37,9 @@ public class Common
     // Ball colors
     public const int Red = 0;
     public const int Blue = 1;
+    public const int Green = 2;
+    public const int Yellow = 3;
+    public const int Purple = 4;
 
     // Am I crazy?
     public const int False = 0;

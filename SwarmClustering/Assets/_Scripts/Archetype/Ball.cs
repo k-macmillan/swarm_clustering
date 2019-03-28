@@ -8,6 +8,9 @@ public static class Ball
 
     public static MeshInstanceRenderer ballRedMesh;
     public static MeshInstanceRenderer ballBlueMesh;
+    public static MeshInstanceRenderer ballGreenMesh;
+    public static MeshInstanceRenderer ballYellowMesh;
+    public static MeshInstanceRenderer ballPurpleMesh;
 
     public static void CreateBall(ref Entity ball, ref EntityManager em, int position, int color)
     {
@@ -21,6 +24,15 @@ public static class Ball
                 break;
             case Common.Blue:
                 em.AddSharedComponentData(ball, ballBlueMesh);
+                break;
+            case Common.Green:
+                em.AddSharedComponentData(ball, ballGreenMesh);
+                break;
+            case Common.Yellow:
+                em.AddSharedComponentData(ball, ballYellowMesh);
+                break;
+            case Common.Purple:
+                em.AddSharedComponentData(ball, ballPurpleMesh);
                 break;
         }
     }

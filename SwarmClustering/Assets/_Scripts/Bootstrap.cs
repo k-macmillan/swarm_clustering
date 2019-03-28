@@ -48,6 +48,9 @@ public class Bootstrap
         {
             GenerateBall(Common.Red);
             GenerateBall(Common.Blue);
+            GenerateBall(Common.Green);
+            GenerateBall(Common.Yellow);
+            GenerateBall(Common.Purple);
         }
 
         // Place Ants

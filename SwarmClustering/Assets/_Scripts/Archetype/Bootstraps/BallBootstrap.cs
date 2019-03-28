@@ -18,6 +18,9 @@ public sealed class BallBootstrap
     {
         Ball.ballRedMesh = Common.GetLookFromPrototype("RedBallPrototype");
         Ball.ballBlueMesh = Common.GetLookFromPrototype("BlueBallPrototype");
+        Ball.ballGreenMesh = Common.GetLookFromPrototype("GreenBallPrototype");
+        Ball.ballYellowMesh = Common.GetLookFromPrototype("YellowBallPrototype");
+        Ball.ballPurpleMesh = Common.GetLookFromPrototype("PurpleBallPrototype");
     }
 
 

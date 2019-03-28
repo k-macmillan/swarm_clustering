@@ -9,6 +9,10 @@ public class SwarmMechanics : ComponentSystem
     private static int position;
     private static int red;
     private static int blue;
+    private static int green;
+    private static int yellow;
+    private static int purple;
+
     private static int modifier = -1;
     private static int[] Edge = { 0, 0, 0, 0 };
     private static bool edge = false;
@@ -126,6 +130,9 @@ public class SwarmMechanics : ComponentSystem
     {
         red = 0;
         blue = 0;
+        green = 0;
+        yellow = 0;
+        purple = 0;
 
         // I am allowing this space to act as a Torus, ignoring the edges.
         for (int i = 0; i < 8; ++i)
@@ -314,7 +321,7 @@ public class SwarmMechanics : ComponentSystem
         }
     }
 
-    private void UpdateRedBlue()
+    private void UpdateBalls()
     {
         switch (modifier)
         {
@@ -323,6 +330,15 @@ public class SwarmMechanics : ComponentSystem
                 break;
             case Common.Blue:
                 ++blue;
+                break;
+            case Common.Green:
+                ++green;
+                break;
+            case Common.Yellow:
+                ++yellow;
+                break;
+            case Common.Purple:
+                ++purple;
                 break;
             default:
                 modifier = -1;
@@ -336,7 +352,7 @@ public class SwarmMechanics : ComponentSystem
         if (Bootstrap.balls.TryGetValue(checkPosition, out Entity ball))
         {
             modifier = Bootstrap.em.GetComponentData<Faction>(ball).Value;
-            UpdateRedBlue();
+            UpdateBalls();
         }
     }
 
@@ -353,15 +369,27 @@ public class SwarmMechanics : ComponentSystem
         // If we end up going with 5x5 locality check: http://www.xuru.org/rt/PR.asp
         if (Bootstrap.balls.TryGetValue(position, out Entity ball))
         {
+            int count = 0;
             switch (Bootstrap.em.GetComponentData<Faction>(ball).Value)
             {
                 case Common.Red:
-                    //return Mathf.Pow(k1 / (k1 + red), 1f);
-                    return 1f - 0.9f * Mathf.Pow(0.5f * (red - 2f), 3f) - 0.9f;
+                    count = red;
+                    break;
                 case Common.Blue:
-                    //return Mathf.Pow(k1 / (k1 + blue), 1f);
-                    return 1f - 0.9f * Mathf.Pow(0.5f * (blue - 2f), 3f) - 0.9f;
+                    count = blue;
+                    break;
+                case Common.Green:
+                    count = green;
+                    break;
+                case Common.Yellow:
+                    count = yellow;
+                    break;
+                case Common.Purple:
+                    count = purple;
+                    break;
             }
+            //return Mathf.Pow(k1 / (k1 + count), 1f);
+            return 1f - 0.9f * Mathf.Pow(0.5f * (count - 2f), 3f) - 0.9f;
         }
         return 0f;
     }
@@ -378,15 +406,27 @@ public class SwarmMechanics : ComponentSystem
     {
         if (Bootstrap.balls.TryGetValue(position, out Entity ball))
         {
+            int count = 0;
             switch (Bootstrap.em.GetComponentData<Faction>(ball).Value)
             {
                 case Common.Red:
-                    //return Mathf.Pow(red / (k2 + red), 2f);
-                    return 0.4f * Mathf.Pow(red - 2f, 3f) + Mathf.Pow(red / (0.25f + red), 2f);
+                    count = red;
+                    break;
                 case Common.Blue:
-                    //return Mathf.Pow(blue / (k2 + blue), 2f);
-                    return 0.4f * Mathf.Pow(blue - 2f, 3f) + Mathf.Pow(blue / (0.25f + blue), 2f);
+                    count = blue;
+                    break;
+                case Common.Green:
+                    count = green;
+                    break;
+                case Common.Yellow:
+                    count = yellow;
+                    break;
+                case Common.Purple:
+                    count = purple;
+                    break;
             }
+            //return Mathf.Pow(count / (k2 + count), 2f);
+            return 0.4f * Mathf.Pow(count - 2f, 3f) + Mathf.Pow(count / (0.25f + count), 2f);
         }
         return 0f;
     }
