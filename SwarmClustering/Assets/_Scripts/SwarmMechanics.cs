@@ -74,8 +74,7 @@ public class SwarmMechanics : ComponentSystem
             {
                 if (Bootstrap.ants.TryGetValue(Common.GetGridIndex(a_Data.NextPosition[i].Value), out Entity e))
                 {
-                    PostUpdateCommands.RemoveComponent<MeshInstanceRenderer>(e);
-                    PostUpdateCommands.AddSharedComponent(e, Ant.antMeshOff);
+                    PostUpdateCommands.SetSharedComponent(e, Ant.antMeshOff);
                 }
             }
         }
@@ -85,8 +84,7 @@ public class SwarmMechanics : ComponentSystem
             {
                 if (Bootstrap.ants.TryGetValue(Common.GetGridIndex(a_Data.NextPosition[i].Value), out Entity e))
                 {
-                    PostUpdateCommands.RemoveComponent<MeshInstanceRenderer>(e);
-                    PostUpdateCommands.AddSharedComponent(e, Ant.antMeshOn);
+                    PostUpdateCommands.SetSharedComponent(e, Ant.antMeshOn);
                 }
             }
         }

@@ -54,22 +54,28 @@ public class PlayerController : ComponentSystem
 
     private void UpdatePosition()
     {
+        float boost = 1;
+        if (Input.GetKey(KeyCode.LeftShift))
+        {
+            boost = Mathf.Log10(Common.width);
+        }
+
         // Movement Handling
         if (Input.GetKey(KeyCode.W))
         {
-            CameraClamp(new Vector3(0, 0, speed));
+            CameraClamp(new Vector3(0, 0, speed * boost));
         }
         if (Input.GetKey(KeyCode.S))
         {
-            CameraClamp(new Vector3(0, 0, -speed));
+            CameraClamp(new Vector3(0, 0, -speed * boost));
         }
         if (Input.GetKey(KeyCode.A))
         {
-            CameraClamp(new Vector3(-speed, 0, 0));
+            CameraClamp(new Vector3(-speed * boost, 0, 0));
         }
         if (Input.GetKey(KeyCode.D))
         {
-            CameraClamp(new Vector3(speed, 0, 0));
+            CameraClamp(new Vector3(speed * boost, 0, 0));
         }
     }
 

@@ -4,6 +4,9 @@ using UnityEngine;
 public class Common
 {
     public const int loop_limit = 100;
+    public const int balls = 200;
+    public const int ants = 1000;
+
     public static int width = 200;
     public static int height = 200;
     public static int max_value = width * height - 1;

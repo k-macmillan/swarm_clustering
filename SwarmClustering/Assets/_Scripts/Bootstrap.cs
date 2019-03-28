@@ -27,9 +27,24 @@ public class Bootstrap
     {
         AntBootstrap.InitializeWithScene();
         BallBootstrap.InitializeWithScene();
-        camera = GameObject.Find("PlayerCamera").gameObject;
+        UpdateTerrain();
+        UpdateCamera();
         PlayerController.LockCursor();
         NewGame();
+    }
+
+    private static void UpdateTerrain()
+    {
+        GameObject terrain = GameObject.Find("Terrain").gameObject;
+        var terrainComponent = terrain.GetComponent<Terrain>();
+        terrainComponent.terrainData.size = new Vector3(Common.width + 10, 1, Common.height + 10);
+        //Debug.Log();
+    }
+
+    private static void UpdateCamera()
+    {
+        camera = GameObject.Find("PlayerCamera").gameObject;
+        camera.transform.position = new Vector3((Common.width + 10) / 2, 20, -30);
     }
 
 
@@ -44,7 +59,7 @@ public class Bootstrap
     {
 
         // Place Balls
-        for (int i = 0; i < 500; ++i)
+        for (int i = 0; i < Common.balls; ++i)
         {
             GenerateBall(Common.Red);
             GenerateBall(Common.Blue);
@@ -54,7 +69,7 @@ public class Bootstrap
         }
 
         // Place Ants
-        for (int i = 0; i < 500; ++i)
+        for (int i = 0; i < Common.ants; ++i)
         {
             GenerateAnt();
         }
