@@ -1,5 +1,4 @@
 ﻿using Unity.Entities;
-using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -7,6 +6,8 @@ public class SwarmMechanics : ComponentSystem
 {
     private static float timer = 0f;
     private static int position;
+    private static int x;
+    private static int z;
     private static int red;
     private static int blue;
     private static int green;
@@ -14,8 +15,6 @@ public class SwarmMechanics : ComponentSystem
     private static int purple;
 
     private static int modifier = -1;
-    private static int[] Edge = { 0, 0, 0, 0 };
-    private static bool edge = false;
     private static bool meshEnabled = true;
 
     public static bool meshToggle = false;
@@ -95,7 +94,9 @@ public class SwarmMechanics : ComponentSystem
     private void UpdateAnt(int index)
     {
         position = Common.GetGridIndex(a_Data.NextPosition[index].Value);
-        EdgeValue();
+        x = (int)a_Data.NextPosition[index].Value.x;
+        z = (int)a_Data.NextPosition[index].Value.z;
+
         // Compute F(x) - Locality
         CountLocality();
 
@@ -159,7 +160,7 @@ public class SwarmMechanics : ComponentSystem
             }
         }
 
-        if (loop_count < Common.loop_limit)
+        if (!redo)
         {
             // Remove from ants and set new start position
             Bootstrap.ants.TryGetValue(prevPosition, out Entity e);
@@ -168,8 +169,15 @@ public class SwarmMechanics : ComponentSystem
             a_Data.Position[index] = new Position { Value = a_Data.StartPosition[index].Value };
 
             // Add new start position and set next position
+            if (InvalidMove(newPosition))
+            {
+                Debug.Log("What happened?");
+                Debug.Log("Old: " + Common.GetGridLocation(position));
+                Debug.Log("New: " + Common.GetGridLocation(newPosition) + "\n");
+            }
             Bootstrap.ants.Add(newPosition, e);
             a_Data.NextPosition[index] = new NextPosition { Value = Common.GetGridLocation(newPosition) };
+            
         }
         else
         {
@@ -196,47 +204,24 @@ public class SwarmMechanics : ComponentSystem
 
     private bool InvalidMove(int pos)
     {
-        bool ret_val = Bootstrap.ants.ContainsKey(pos);
-        if (ret_val)
-            return true;
-
-
-        if (edge)
+        if (Bootstrap.ants.ContainsKey(pos))
         {
-            if (Edge[Common.Top] == 1)
-            {
-                if (pos > Common.max_value)
-                {
-                    ret_val = true;
-                }
-            }
-
-            if (Edge[Common.Left] == 1)
-            {
-                if ((pos - 1) % Common.width == Common.width - 1)
-                {
-                    ret_val = true;
-                }
-            }
-
-            if (Edge[Common.Right] == 1)
-            {
-                if ((pos + 1) % Common.width == 0)
-                {
-                    ret_val = true;
-                }
-            }
-
-            if (Edge[Common.Bottom] == 1)
-            {
-                if (pos < 0)
-                {
-                    ret_val = true;
-                }
-            }
+            return true;
         }
 
-        return ret_val;
+        var p = Common.GetGridLocation(pos);
+
+        if (Mathf.Abs(x - p.x) > 1.1f || p.x > Common.width || p.x < 0)
+        {
+            return true;
+        }
+
+        if (Mathf.Abs(z - p.z) > 1.1f || p.z > Common.height || p.z < 0)
+        {
+            return true;
+        }
+
+        return false;
     }
 
 
@@ -286,37 +271,6 @@ public class SwarmMechanics : ComponentSystem
 
         }
         return ret_val;
-    }
-
-    private void EdgeValue()
-    {
-        // Reset
-        Edge[0] = 0;
-        Edge[1] = 0;
-        Edge[2] = 0;
-        Edge[3] = 0;
-        edge = false;
-
-        if (position > Common.max_value - Common.width)
-        {
-            Edge[Common.Top] = 1;
-            edge = true;
-        }
-        if (position % Common.width == 0)
-        {
-            Edge[Common.Left] = 1;
-            edge = true;
-        }
-        if (position % Common.width == Common.width - 1)
-        {
-            Edge[Common.Right] = 1;
-            edge = true;
-        }
-        if (position < Common.width)
-        {
-            Edge[Common.Bottom] = 1;
-            edge = true;
-        }
     }
 
     private void UpdateBalls()
