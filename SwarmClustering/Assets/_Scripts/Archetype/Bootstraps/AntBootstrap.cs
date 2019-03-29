@@ -10,9 +10,10 @@ public sealed class AntBootstrap
         // Create ant archetype
         Ant.antArchetype = Bootstrap.em.CreateArchetype(
             ComponentType.Create<Position>(),
-            ComponentType.Create<Carrying>(),
-            ComponentType.Create<StartPosition>(),
-            ComponentType.Create<NextPosition>()
+            ComponentType.Create<BestPosition>(),
+            ComponentType.Create<Fitness>(),
+            ComponentType.Create<BestFitness>(),
+            ComponentType.Create<Velocity>()
             );
     }
 
@@ -20,8 +21,6 @@ public sealed class AntBootstrap
     {
         Ant.antMesh = Common.GetLookFromPrototype("AntBodyPrototype");
     }
-
-
 
     private static void OnSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
     {

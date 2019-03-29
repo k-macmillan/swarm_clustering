@@ -4,10 +4,12 @@ using UnityEngine;
 public class Common
 {
     public const int loop_limit = 100;
-    public static int width = 200;
-    public static int height = 200;
-    public static int max_value = width * height - 1;
+    public static int width = 1;
+    public static int height = 1;
+    public static float3 min_value = new float3(0,0,0);
+    public static float3 max_value = new float3(1,0,0);
     public static float Delay = 0.15625f;
+    public static float3 Global;
     public static float3 vecOffset = new float3(0.125f, 0f, 0f);
 
 
@@ -24,19 +26,23 @@ public class Common
         return result;
     }
 
-    public static float3 GetGridLocation(int position)
+    public static void DestroySphere(string protoName)
     {
-        return new float3(position % width, 1, position / height);
+        var proto = GameObject.Find(protoName);
+        Object.Destroy(proto);
     }
 
-    public static int GetGridIndex(float3 position)
+    public static float3 SetPosition()
     {
-        return (int)(position.z * width + position.x);
+        float x = UnityEngine.Random.value;
+        return new float3(x, 1, Evaluation(x));
     }
 
-    // Ball colors
-    public const int Red = 0;
-    public const int Blue = 1;
+    public static float Evaluation(float x)
+    {
+        return (Mathf.Pow(2, -2 * Mathf.Pow((x - 0.1f) / 0.9f, 2))
+                * Mathf.Pow(Mathf.Sin(5 * Mathf.PI * x), 2));
+    }
 
     // Am I crazy?
     public const int False = 0;

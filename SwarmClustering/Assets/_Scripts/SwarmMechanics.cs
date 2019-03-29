@@ -5,24 +5,15 @@ using UnityEngine;
 public class SwarmMechanics : ComponentSystem
 {
     private static float timer = 0f;
-    private static int position;
-    private static int red;
-    private static int blue;
-    private static int modifier = -1;
-    private static int[] Edge = { 0, 0, 0, 0 };
-    private static bool edge = false;
-
-    // Pickup/Dropoff probability constants
-    private const float k1 = 1f;
-    private const float k2 = 0.25f;
 
     public struct AntData
     {
         public readonly int Length;
         public ComponentDataArray<Position> Position;
-        public ComponentDataArray<Carrying> Carrying;
-        public ComponentDataArray<StartPosition> StartPosition;
-        public ComponentDataArray<NextPosition> NextPosition;
+        public ComponentDataArray<BestPosition> BestPosition;
+        public ComponentDataArray<Fitness> Fitness;
+        public ComponentDataArray<BestFitness> BestFitness;
+        public ComponentDataArray<Velocity> Velocity;
     }
 
     [Inject] private AntData a_Data;
@@ -37,318 +28,41 @@ public class SwarmMechanics : ComponentSystem
         {
             timer = 0f;
             // Update new direction/actions
-            for (int i = 0; i < a_Data.Length; ++i)
+            for (int i = 0; i < Bootstrap.POP; ++i)
             {
                 UpdateAnt(i);
-            }
-        }
-        else
-        {
-            // LERP postional movement
-            float timeLeft = 1 - (Common.Delay - timer) / Common.Delay;            
-            for (int i = 0; i < a_Data.Length; ++i)
-            {
-                a_Data.Position[i] = new Position { Value = Vector3.Lerp(a_Data.StartPosition[i].Value, a_Data.NextPosition[i].Value, timeLeft) };
             }
         }
     }
 
     private void UpdateAnt(int index)
     {
-        position = Common.GetGridIndex(a_Data.NextPosition[index].Value);
-        EdgeValue();
-        // Compute F(x) - Locality
-        CountLocality();
+        float phi1 = Random.value;
+        float phi2 = Random.value;
 
-        if (a_Data.Carrying[index].Value == Common.False && Bootstrap.balls.ContainsKey(position))
+        a_Data.Velocity[index] = new Velocity
         {
-            // IF unloaded and circle
-            PickupItem(index);
-        }
-        else if (a_Data.Carrying[index].Value == Common.True)
-        {
-            // ELSE IF loaded and empty
-            DropoffItem(index);
-        }
+            Value = a_Data.Velocity[index].Value +
+            phi1 * (a_Data.BestPosition[index].Value - a_Data.Position[index].Value) +
+            phi2 * (Common.Global - a_Data.Position[index].Value)
+        };
 
-        // Handle movement
-        if (a_Data.Carrying[index].Value == Common.False)
+        if(a_Data.Position[index].Value.x + a_Data.Velocity[index].Value.x < Common.max_value.x &&
+            a_Data.Position[index].Value.x + a_Data.Velocity[index].Value.x > Common.min_value.x)
         {
-            // Move rando no ants
-            UpdateAntPosition(index);
+            a_Data.Position[index] = new Position { Value = a_Data.Position[index].Value + a_Data.Velocity[index].Value };
+            a_Data.Fitness[index] = new Fitness { Value = Common.Evaluation(a_Data.Position[index].Value.x) };
         }
-        else
+        
+        if(a_Data.Fitness[index].Value > a_Data.BestFitness[index].Value)
         {
-            // Move rando no ants no balls
-            UpdateAntPosition(index, true);
-            UpdateBallPosition(index);
-        }
-    }
-
-    private void CountLocality()
-    {
-        red = 0;
-        blue = 0;
-
-        // I am allowing this space to act as a Torus, ignoring the edges.
-        for (int i = 0; i < 8; ++i)
-        {
-            CheckLocality(GetPosition(i));
-        }
-    }
-
-    private void UpdateAntPosition(int index, bool noBalls = false)
-    {
-        int loop_count = 0;
-        int newPosition = GetPosition(Random.Range(0, 8));
-        int prevPosition = Common.GetGridIndex(a_Data.NextPosition[index].Value);
-        bool redo = InvalidMove(newPosition);
-        if (noBalls)
-        {
-            redo = redo || Bootstrap.balls.ContainsKey(newPosition);
-        }
-        while (redo && ++loop_count < Common.loop_limit)
-        {
-            newPosition = GetPosition(Random.Range(0, 8));
-            redo = InvalidMove(newPosition);
-            if (noBalls)
-            {
-                redo = redo || Bootstrap.balls.ContainsKey(newPosition);
-            }
+            a_Data.BestFitness[index] = new BestFitness { Value = a_Data.Fitness[index].Value };
+            a_Data.BestPosition[index] = new BestPosition { Value = a_Data.Position[index].Value };
         }
 
-        if (loop_count < Common.loop_limit)
+        if(a_Data.Fitness[index].Value > Common.Evaluation(Common.Global.x))
         {
-            // Remove from ants and set new start position
-            Bootstrap.ants.Remove(prevPosition);
-            a_Data.StartPosition[index] = new StartPosition { Value = a_Data.NextPosition[index].Value };
-            a_Data.Position[index] = new Position { Value = a_Data.StartPosition[index].Value };
-
-            // Add new start position and set next position
-            Bootstrap.ants.Add(newPosition, 0);
-            a_Data.NextPosition[index] = new NextPosition { Value = Common.GetGridLocation(newPosition) };
+            Common.Global = a_Data.BestPosition[index].Value;
         }
-        else
-        {
-            // It stays still
-            a_Data.StartPosition[index] = new StartPosition { Value = a_Data.NextPosition[index].Value };
-            a_Data.Position[index] = new Position { Value = a_Data.StartPosition[index].Value };
-#if UNITY_EDITOR
-            Debug.Log("Ant is stuck at: " + position);
-#endif
-        }
-    }
-
-    private void UpdateBallPosition(int index)
-    {
-        if (Bootstrap.balls.TryGetValue(position, out Entity ball))
-        {
-            // Remove ball from balls
-            Bootstrap.balls.Remove(position);
-            //Update ball to ant position
-            Bootstrap.em.SetComponentData(ball, new Position { Value = a_Data.NextPosition[index].Value });
-            Bootstrap.balls.Add(Common.GetGridIndex(a_Data.NextPosition[index].Value), ball);
-        }
-    }
-
-    private bool InvalidMove(int pos)
-    {
-        bool ret_val = Bootstrap.ants.ContainsKey(pos);
-        if (ret_val)
-            return true;
-
-
-        if (edge)
-        {
-            if (Edge[Common.Top] == 1)
-            {
-                if (pos > Common.max_value)
-                {
-                    ret_val = true;
-                }
-            }
-
-            if (Edge[Common.Left] == 1)
-            {
-                if ((pos - 1) % Common.width == Common.width - 1)
-                {
-                    ret_val = true;
-                }
-            }
-
-            if (Edge[Common.Right] == 1)
-            {
-                if ((pos + 1) % Common.width == 0)
-                {
-                    ret_val = true;
-                }
-            }
-
-            if (Edge[Common.Bottom] == 1)
-            {
-                if (pos < 0)
-                {
-                    ret_val = true;
-                }
-            }
-        }
-
-        return ret_val;
-    }
-
-
-    private int GetPosition(int pos)
-    {
-        int ret_val = 0;
-        switch (pos)
-        {
-            case 0:
-                // Top Left
-                ret_val = position - (Common.width + 1);
-                break;
-            case 1:
-                // Top Center
-                ret_val = position - Common.width;
-                break;
-            case 2:
-                // Top Right
-                ret_val = position - (Common.width - 1);
-                break;
-            case 3:
-                // Left
-                ret_val = position - 1;
-                break;
-            case 4:
-                // Right
-                ret_val = position + 1;
-                break;
-            case 5:
-                // Bottom Left
-                ret_val = position + (Common.width - 1);
-                break;
-            case 6:
-                // Bottom Center
-                ret_val = position + Common.width;
-                break;
-            case 7:
-                // Bottom Right
-                ret_val = position + (Common.width + 1);
-                break;
-            default:
-#if UNITY_EDITOR
-
-                Debug.Log("How is this possible?");
-#endif
-                break;
-
-        }
-        return ret_val;
-    }
-
-    private void EdgeValue()
-    {
-        // Reset
-        Edge[0] = 0;
-        Edge[1] = 0;
-        Edge[2] = 0;
-        Edge[3] = 0;
-        edge = false;
-
-        if (position > Common.max_value - Common.width)
-        {
-            Edge[Common.Top] = 1;
-            edge = true;
-        }
-        if (position % Common.width == 0)
-        {
-            Edge[Common.Left] = 1;
-            edge = true;
-        }
-        if (position % Common.width == Common.width - 1)
-        {
-            Edge[Common.Right] = 1;
-            edge = true;
-        }
-        if (position < Common.width)
-        {
-            Edge[Common.Bottom] = 1;
-            edge = true;
-        }
-    }
-
-    private void UpdateRedBlue()
-    {
-        switch (modifier)
-        {
-            case Common.Red:
-                ++red;
-                break;
-            case Common.Blue:
-                ++blue;
-                break;
-            default:
-                modifier = -1;
-                break;
-        }
-        modifier = -1;
-    }
-
-    private void CheckLocality(int checkPosition)
-    {
-        if (Bootstrap.balls.TryGetValue(checkPosition, out Entity ball))
-        {
-            modifier = Bootstrap.em.GetComponentData<Faction>(ball).Value;
-            UpdateRedBlue();
-        }
-    }
-
-    private void PickupItem(int index)
-    {
-        if (ProbabilityPickup() > Random.value)
-        {
-            a_Data.Carrying[index] = new Carrying { Value = Common.True };
-        }
-    }
-
-    private float ProbabilityPickup()
-    {
-        if(Bootstrap.balls.TryGetValue(position, out Entity ball))
-        {
-            switch (Bootstrap.em.GetComponentData<Faction>(ball).Value)
-            {
-                case Common.Red:
-                    //return Mathf.Pow(k1 / (k1 + red), 1f);
-                    return 1f - 0.9f * Mathf.Pow(0.5f * (red - 2f), 3f) - 0.9f;
-                case Common.Blue:
-                    //return Mathf.Pow(k1 / (k1 + blue), 1f);
-                    return 1f - 0.9f * Mathf.Pow(0.5f * (blue - 2f), 3f) - 0.9f;
-            }
-        }
-        return 0f;
-    }
-
-    private void DropoffItem(int index)
-    {
-        if (ProbabilityDropoff() > Random.value)
-        {
-            a_Data.Carrying[index] = new Carrying { Value = Common.False };
-        }
-    }
-
-    private float ProbabilityDropoff()
-    {
-        if (Bootstrap.balls.TryGetValue(position, out Entity ball))
-        {
-            switch (Bootstrap.em.GetComponentData<Faction>(ball).Value)
-            {
-                case Common.Red:
-                    //return Mathf.Pow(red / (k2 + red), 2f);
-                    return 0.4f * Mathf.Pow(red - 2f, 3f) + Mathf.Pow(red / (0.25f + red), 2f);
-                case Common.Blue:
-                    //return Mathf.Pow(blue / (k2 + blue), 2f);
-                    return 0.4f * Mathf.Pow(blue - 2f, 3f) + Mathf.Pow(blue / (0.25f + blue), 2f);
-            }
-        }
-        return 0f;
     }
 }
