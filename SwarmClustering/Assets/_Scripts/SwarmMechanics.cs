@@ -46,7 +46,7 @@ public class SwarmMechanics : ComponentSystem
             // Update new direction/actions
             for (int i = 0; i < a_Data.Length; ++i)
             {
-                UpdateAnt(i);
+                //UpdateAnt(i);
             }
         }
         else
