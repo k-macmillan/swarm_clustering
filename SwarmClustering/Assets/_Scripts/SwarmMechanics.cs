@@ -20,8 +20,8 @@ public class SwarmMechanics : ComponentSystem
     public static bool meshToggle = false;
 
     // Pickup/Dropoff probability constants
-    private const float k1 = 1f;
-    private const float k2 = 0.25f;
+    private const float k1 = 0.0125f;
+    private const float k2 = 0.004f;
 
     public struct AntData
     {
@@ -99,7 +99,6 @@ public class SwarmMechanics : ComponentSystem
 
         // Compute F(x) - Locality
         UpdateLocality();
-        //CountLocality();
 
         if (a_Data.Carrying[index].Value == Common.False && Bootstrap.balls.ContainsKey(position))
         {
@@ -317,19 +316,19 @@ public class SwarmMechanics : ComponentSystem
         switch (modifier)
         {
             case Common.Red:
-                red += 1 / dist;
+                red += dist;
                 break;
             case Common.Blue:
-                blue += 1 / dist;
+                blue += dist;
                 break;
             case Common.Green:
-                green += 1 / dist;
+                green += dist;
                 break;
             case Common.Yellow:
-                yellow += 1 / dist;
+                yellow += dist;
                 break;
             case Common.Purple:
-                purple += 1 / dist;
+                purple += dist;
                 break;
             default:
                 modifier = -1;
@@ -343,7 +342,7 @@ public class SwarmMechanics : ComponentSystem
         if (Bootstrap.balls.TryGetValue(checkPosition, out Entity ball))
         {
             modifier = Bootstrap.em.GetComponentData<Faction>(ball).Value;
-            UpdateBalls(Mathf.Pow(dist, 3f));
+            UpdateBalls(1f / Mathf.Pow(dist, 3f));
         }
     }
 
@@ -360,28 +359,27 @@ public class SwarmMechanics : ComponentSystem
         // If we end up going with 5x5 locality check: http://www.xuru.org/rt/PR.asp
         if (Bootstrap.balls.TryGetValue(position, out Entity ball))
         {
-            float count = 0;
+            float count = -1f;
             switch (Bootstrap.em.GetComponentData<Faction>(ball).Value)
             {
                 case Common.Red:
-                    count = red;
+                    count += red;
                     break;
                 case Common.Blue:
-                    count = blue;
+                    count += blue;
                     break;
                 case Common.Green:
-                    count = green;
+                    count += green;
                     break;
                 case Common.Yellow:
-                    count = yellow;
+                    count += yellow;
                     break;
                 case Common.Purple:
-                    count = purple;
+                    count += purple;
                     break;
             }
-            return 0.1f - 0.7f * Mathf.Pow(0.4f * (count - 1.5f), 3f);
-            // Proportional comparison
-            //return 1f / ((Mathf.Pow(count - 1f, 4f) / Common.areaValue[Common.radius]) + 1f);
+            count = (count * count) / Mathf.Pow(Common.areaValue[Common.radius], 2f);
+            return Mathf.Pow(k1 / (k1 + count), 2f);
         }
         return 0f;
     }
@@ -398,28 +396,27 @@ public class SwarmMechanics : ComponentSystem
     {
         if (Bootstrap.balls.TryGetValue(position, out Entity ball))
         {
-            float count = 0;
+            float count = -1f;
             switch (Bootstrap.em.GetComponentData<Faction>(ball).Value)
             {
                 case Common.Red:
-                    count = red;
+                    count += red;
                     break;
                 case Common.Blue:
-                    count = blue;
+                    count += blue;
                     break;
                 case Common.Green:
-                    count = green;
+                    count += green;
                     break;
                 case Common.Yellow:
-                    count = yellow;
+                    count += yellow;
                     break;
                 case Common.Purple:
-                    count = purple;
+                    count += purple;
                     break;
             }
-            return 0.4f * Mathf.Pow(count - 2.175f, 3f) + Mathf.Pow(count / (0.25f + count), 2f);
-            // Proportional comparison
-            //return (Mathf.Pow(count - 1f, 2f) / Common.areaValue[Common.radius]) / (1f + (Mathf.Pow(count - 3f, 2f) / Common.areaValue[Common.radius]));
+            count = (count * count) / Mathf.Pow(Common.areaValue[Common.radius], 2f);
+            return Mathf.Pow(count / (k2 + count), 2f);
 
         }
         return 0f;
